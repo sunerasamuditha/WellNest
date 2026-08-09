@@ -1,7 +1,7 @@
 # SilverGrove Core Dependencies
 google-adk==2.1.0
 google-genai==1.75.0
-mcp
+mcp>=1.27.1
 fastapi
 uvicorn
 python-dotenv
