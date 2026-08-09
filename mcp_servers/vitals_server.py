@@ -31,8 +31,8 @@ RESIDENTS_PATH = os.path.join(DATA_DIR, "data", "residents.json")
 # clinical trend remains consistent and anomaly-triggering.
 
 RESIDENT_ANOMALY_PROFILES = {
-    "martha_001": {
-        # Martha: Elevated BP from new Metoprolol + gait slowdown
+    "Sriyani_001": {
+        # Sriyani: Elevated BP from new Metoprolol + gait slowdown
         "heart_rate_bpm": {"target": 78, "jitter": 3},
         "bp_systolic": {"target": 142, "jitter": 4},
         "bp_diastolic": {"target": 88, "jitter": 3},
@@ -41,8 +41,8 @@ RESIDENT_ANOMALY_PROFILES = {
         "room_options": ["bedroom", "living_room", "hallway"],
         "gait_decline_severity": 0.15  # 15% decline from baseline
     },
-    "arthur_002": {
-        # Arthur: Stable vitals, minor sleep reduction (no anomaly)
+    "Kamal_002": {
+        # Kamal: Stable vitals, minor sleep reduction (no anomaly)
         "heart_rate_bpm": {"target": 69, "jitter": 2},
         "bp_systolic": {"target": 122, "jitter": 3},
         "bp_diastolic": {"target": 75, "jitter": 2},
@@ -51,8 +51,8 @@ RESIDENT_ANOMALY_PROFILES = {
         "room_options": ["living_room", "bedroom", "kitchen"],
         "gait_decline_severity": 0.02  # Stable, ~2% natural variance
     },
-    "clara_003": {
-        # Clara: Parkinson's gait freeze + orthostatic hypotension (low BP)
+    "Nanda_003": {
+        # Nanda: Parkinson's gait freeze + orthostatic hypotension (low BP)
         "heart_rate_bpm": {"target": 76, "jitter": 3},
         "bp_systolic": {"target": 98, "jitter": 4},
         "bp_diastolic": {"target": 60, "jitter": 3},
@@ -61,8 +61,8 @@ RESIDENT_ANOMALY_PROFILES = {
         "room_options": ["hallway", "bedroom", "bathroom"],
         "gait_decline_severity": 0.28  # Severe 28% decline (Parkinson's shuffle)
     },
-    "james_004": {
-        # James: Post-op opioid sedation + severe gait collapse
+    "Ruwan_004": {
+        # Ruwan: Post-op opioid sedation + severe gait collapse
         "heart_rate_bpm": {"target": 92, "jitter": 4},
         "bp_systolic": {"target": 138, "jitter": 4},
         "bp_diastolic": {"target": 84, "jitter": 3},

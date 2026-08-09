@@ -100,11 +100,11 @@ def clear_alerts_timeline():
 if __name__ == "__main__":
     clear_alerts_timeline()
     log_alert_to_timeline(
-        resident_id="martha_001",
-        resident_name="Martha Reynolds",
+        resident_id="Sriyani_001",
+        resident_name="Sriyani Perera",
         severity="WARNING",
         message="Gait speed decline of 15.3% detected over 5 days. Elevated blood pressure of 142/88 mmHg.",
-        actions=["Check on Martha immediately", "Advise her to drink water and stand slowly", "Request primary care physician medication review"],
+        actions=["Check on Sriyani immediately", "Advise her to drink water and stand slowly", "Request primary care physician medication review"],
         correlation="Recently started Metoprolol Succinate 50mg (Beta-blocker) on 2026-05-23. Common side effects include orthostatic hypotension."
     )
     print(get_alerts_timeline())

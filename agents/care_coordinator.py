@@ -5,7 +5,7 @@ def log_a2a_alert_tool(resident_id: str, resident_name: str, severity: str, mess
     """
     Publish a structured health alert over the Agent-to-Agent (A2A) protocol.
     Arguments:
-        resident_id: Unique resident identifier (e.g. martha_001)
+        resident_id: Unique resident identifier (e.g. Sriyani_001)
         resident_name: Name of the senior resident
         severity: Urgency of alert (INFO, ADVISORY, WARNING, CRITICAL)
         message: Detailed alert context (e.g. gait slowdown, vital telemetry)
