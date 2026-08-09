@@ -100,7 +100,7 @@ def clear_alerts_timeline():
 if __name__ == "__main__":
     clear_alerts_timeline()
     log_alert_to_timeline(
-        resident_id="Sriyani_001",
+        resident_id="sriyani_001",
         resident_name="Sriyani Perera",
         severity="WARNING",
         message="Gait speed decline of 15.3% detected over 5 days. Elevated blood pressure of 142/88 mmHg.",

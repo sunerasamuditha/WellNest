@@ -31,7 +31,7 @@ RESIDENTS_PATH = os.path.join(DATA_DIR, "data", "residents.json")
 # clinical trend remains consistent and anomaly-triggering.
 
 RESIDENT_ANOMALY_PROFILES = {
-    "Sriyani_001": {
+    "sriyani_001": {
         # Sriyani: Elevated BP from new Metoprolol + gait slowdown
         "heart_rate_bpm": {"target": 78, "jitter": 3},
         "bp_systolic": {"target": 142, "jitter": 4},
@@ -41,7 +41,7 @@ RESIDENT_ANOMALY_PROFILES = {
         "room_options": ["bedroom", "living_room", "hallway"],
         "gait_decline_severity": 0.15  # 15% decline from baseline
     },
-    "Kamal_002": {
+    "kamal_002": {
         # Kamal: Stable vitals, minor sleep reduction (no anomaly)
         "heart_rate_bpm": {"target": 69, "jitter": 2},
         "bp_systolic": {"target": 122, "jitter": 3},
@@ -51,7 +51,7 @@ RESIDENT_ANOMALY_PROFILES = {
         "room_options": ["living_room", "bedroom", "kitchen"],
         "gait_decline_severity": 0.02  # Stable, ~2% natural variance
     },
-    "Nanda_003": {
+    "nanda_003": {
         # Nanda: Parkinson's gait freeze + orthostatic hypotension (low BP)
         "heart_rate_bpm": {"target": 76, "jitter": 3},
         "bp_systolic": {"target": 98, "jitter": 4},
@@ -61,7 +61,7 @@ RESIDENT_ANOMALY_PROFILES = {
         "room_options": ["hallway", "bedroom", "bathroom"],
         "gait_decline_severity": 0.28  # Severe 28% decline (Parkinson's shuffle)
     },
-    "Ruwan_004": {
+    "ruwan_004": {
         # Ruwan: Post-op opioid sedation + severe gait collapse
         "heart_rate_bpm": {"target": 92, "jitter": 4},
         "bp_systolic": {"target": 138, "jitter": 4},

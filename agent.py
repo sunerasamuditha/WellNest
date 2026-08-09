@@ -375,6 +375,6 @@ if __name__ == "__main__":
     # Test orchestrator locally
     orchestrator = WellNestOrchestrator()
     collector = TraceCollector("test_session")
-    res = orchestrator.run_health_check("Sriyani_001", collector)
+    res = orchestrator.run_health_check("sriyani_001", collector)
     print("\n--- HEALTH CHECK SUMMARY ---")
     print(res["summary"])

@@ -85,6 +85,6 @@ def get_resident_details_tool(resident_id: str) -> str:
         return f"Tool Execution Error (get_resident_details): {str(e)}"
 
 if __name__ == "__main__":
-    print(get_resident_details_tool("Sriyani_001"))
-    print(get_resident_vitals_tool("Sriyani_001"))
-    print(get_gait_trend_tool("Sriyani_001"))
+    print(get_resident_details_tool("sriyani_001"))
+    print(get_resident_vitals_tool("sriyani_001"))
+    print(get_gait_trend_tool("sriyani_001"))
