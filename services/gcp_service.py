@@ -21,7 +21,7 @@ PROJECT_ID = os.environ.get("PROJECT_ID", "wellnest-a2a")
 try:
     from google.cloud import firestore
     # Auto-resolves credentials via Application Default Credentials (ADC) or environmental files
-    firestore_client = firestore.Client(project=PROJECT_ID)
+    firestore_client = firestore.Client(project=PROJECT_ID, database="wellnest-firestore")
     FIRESTORE_ACTIVE = True
     logger.info(f"[GCP Config] Cloud Firestore client initialized successfully for project: {PROJECT_ID}")
 except Exception as e:
