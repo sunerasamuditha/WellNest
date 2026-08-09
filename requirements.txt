@@ -1,0 +1,13 @@
+# SilverGrove Core Dependencies
+google-adk==2.1.0
+google-genai==1.75.0
+mcp
+fastapi
+uvicorn
+python-dotenv
+fpdf2
+requests
+
+# GCP Cloud Integrations (optional — graceful fallback to local storage if unavailable)
+google-cloud-firestore
+google-cloud-pubsub

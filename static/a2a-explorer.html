@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SilverGrove A2A - Protocol Explorer</title>
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-clinical);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      padding: 16px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .glass-header {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--color-primary);
+      border-radius: 4px;
+      background: var(--color-primary);
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--color-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--color-primary);
+      background: rgba(2, 132, 199, 0.06);
+      border-color: rgba(2, 132, 199, 0.15);
+    }
+
+    .explorer-container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .page-title-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .page-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .discovery-endpoints {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .endpoint-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .ep-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ep-method {
+      background: rgba(22, 163, 74, 0.08);
+      color: var(--color-success);
+      border: 1px solid rgba(22, 163, 74, 0.2);
+      font-size: 0.7rem;
+      font-family: monospace;
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-weight: 700;
+    }
+
+    .ep-route {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .ep-title {
+      font-weight: 700;
+      color: var(--color-text-primary);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .ep-desc {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      line-height: 1.4;
+    }
+
+    .view-btn {
+      background: var(--panel-inner);
+      border: 1px solid var(--border-color);
+      color: var(--color-text-secondary);
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: monospace;
+      text-align: center;
+    }
+
+    .view-btn:hover {
+      background: rgba(2, 132, 199, 0.05);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .network-visualization {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .viz-nodes {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      max-width: 1200px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .viz-node {
+      background: var(--panel-inner);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 16px;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .viz-node:hover {
+      border-color: var(--color-primary);
+      background: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .node-icon-wrapper {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 132, 199, 0.05);
+      border: 1.5px solid var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .node-title {
+      font-weight: 700;
+      color: var(--color-text-primary);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .node-role {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    .metadata-viewer {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 16px;
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .viewer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+    }
+
+    .viewer-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: #ffffff;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .pre-container {
+      margin: 0;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 16px;
+      border-radius: 2px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: #38bdf8;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .backend-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      background: var(--panel-inner);
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      border-radius: 4px;
+      color: var(--color-text-secondary);
+    }
+
+    .status-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+
+    .status-indicator.online {
+      background: var(--color-success);
+      box-shadow: 0 0 6px var(--color-success);
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Background Gradients -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="portal-container">
+    <!-- HEADER -->
+    <header class="main-header glass-panel">
+      <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <div class="logo-area">
+              <div class="logo-icon" style="display: flex; align-items: center; justify-content: center; height: 64px; width: 128px; border-radius: 4px; overflow: hidden; background: transparent;">
+                  <img src="logo.png" alt="SilverGrove Logo" style="height: 100%; width: 100%; object-fit: contain;">
+              </div>
+              <div class="logo-text">
+                  <h1>SilverGrove</h1>
+                  <p>Ambient Assisted Living Multi-Agent System</p>
+              </div>
+          </div>
+
+          <nav class="nav-links">
+              <a href="index.html">Command Center</a>
+              <a href="a2a-explorer.html" class="active">A2A Explorer</a>
+              <a href="simulation.html">Simulation</a>
+              <a href="family-gateway.html">Family App</a>
+              <a href="physician-gateway.html">Physician EHR</a>
+          </nav>
+      </div>
+
+      <div class="status-bar">
+        <div class="connection-badge" id="conn-badge">
+          <div class="connection-dot" id="conn-dot"></div>
+          <span id="conn-text">Checking...</span>
+        </div>
+        <button id="config-backend-btn" class="btn btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Connect Backend
+        </button>
+        <button id="clear-btn" class="btn btn-secondary">Clear Alerts</button>
+      </div>
+    </header>
+
+  <div class="explorer-container">
+    <div class="page-title-section">
+      <h1 class="page-title">A2A Protocol Explorer</h1>
+      <p class="page-subtitle">Inspect autonomous Agent-to-Agent discovery profiles and clinical orchestration capabilities compiled to open standard specification layouts.</p>
+    </div>
+
+    <div class="discovery-endpoints">
+      <div class="endpoint-card">
+        <div class="ep-header">
+          <span class="ep-method">GET</span>
+          <span class="ep-route">/.well-known/agent.json</span>
+        </div>
+        <h3 class="ep-title">Well-Known Discovery Card</h3>
+        <p class="ep-desc">Linux Foundation standard route for discovering system root agent capabilities, endpoints, and coordination schemas.</p>
+        <button class="view-btn" id="btnWellKnown">Inspect Well-Known Card</button>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="ep-header">
+          <span class="ep-method">GET</span>
+          <span class="ep-route">/a2a/agents</span>
+        </div>
+        <h3 class="ep-title">All Agents Registry</h3>
+        <p class="ep-desc">Inspect capabilities, system URLs, and clinical skills of all 4 autonomous agents executing inside the SilverGrove system.</p>
+        <button class="view-btn" id="btnAllAgents">Inspect Full Registry</button>
+      </div>
+    </div>
+
+    <div class="network-visualization">
+      <h3 class="panel-title" style="align-self: flex-start;">Clinical Multi-Agent Topology</h3>
+      <div class="viz-nodes">
+        <div class="viz-node" style="cursor: pointer;" id="nodeSensory">
+          <div class="node-icon-wrapper" style="border-color: #3b82f6;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+            </svg>
+          </div>
+          <h4 class="node-title">Sensory Guardian</h4>
+          <span class="node-role" style="color: #3b82f6;">Ambient Telemetry Monitor</span>
+          <button class="view-btn" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">View Card</button>
+        </div>
+
+        <div class="viz-node" style="cursor: pointer;" id="nodeMedical">
+          <div class="node-icon-wrapper" style="border-color: #ec4899;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+          </div>
+          <h4 class="node-title">Medical Compliance</h4>
+          <span class="node-role" style="color: #ec4899;">Clinical Reasoning Engine</span>
+          <button class="view-btn" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">View Card</button>
+        </div>
+
+        <div class="viz-node" style="cursor: pointer;" id="nodeCognitive">
+          <div class="node-icon-wrapper" style="border-color: #10b981;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <h4 class="node-title">Cognitive Companion</h4>
+          <span class="node-role" style="color: #10b981;">Resident Advocate Interface</span>
+          <button class="view-btn" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">View Card</button>
+        </div>
+
+        <div class="viz-node" style="cursor: pointer;" id="nodeCoordinator">
+          <div class="node-icon-wrapper" style="border-color: #8b5cf6;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <h4 class="node-title">Care Coordinator</h4>
+          <span class="node-role" style="color: #8b5cf6;">A2A Event Gateway</span>
+          <button class="view-btn" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">View Card</button>
+        </div>
+
+        <div class="viz-node" style="cursor: pointer; background: rgba(245, 158, 11, 0.03); border-style: dashed;" id="nodeFamily">
+          <div class="node-icon-wrapper" style="border-color: #f59e0b;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h4 class="node-title">Family Gateway</h4>
+          <span class="node-role" style="color: #f59e0b;">External Dispatch Target</span>
+          <button class="view-btn" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">View Card</button>
+        </div>
+
+        <div class="viz-node" style="cursor: pointer; background: rgba(245, 158, 11, 0.03); border-style: dashed;" id="nodePhysician">
+          <div class="node-icon-wrapper" style="border-color: #f59e0b;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+          </div>
+          <h4 class="node-title">Physician Gateway</h4>
+          <span class="node-role" style="color: #f59e0b;">External Dispatch Target</span>
+          <button class="view-btn" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">View Card</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="metadata-viewer">
+      <div class="viewer-header">
+        <h4 class="viewer-title" id="viewerTitle">Metadata Card Viewer</h4>
+        <span style="font-family: 'Fira Code', monospace; font-size: 0.75rem; color: #64748b;">FORMAT: JSON</span>
+      </div>
+      <pre class="pre-container" id="jsonDisplay">// Select an endpoint or node above to inspect open A2A specification metadata...</pre>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- Backend Config Modal -->
+  <div id="modal-config" class="modal hidden">
+      <div class="modal-content glass-panel" style="max-width: 450px;">
+          <div class="modal-header">
+              <span class="modal-warning-icon" style="display:flex;align-items:center;justify-content:center;color:var(--color-primary);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                  </svg>
+              </span>
+              <h2>Connect Cloud Run Backend</h2>
+          </div>
+          <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+              <p style="font-size:13px;color:var(--color-text-muted);">
+                  Specify your Google Cloud Run API Gateway URL to connect this frontend with your active agents.
+              </p>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--color-text-primary);text-transform:uppercase;">Cloud Run Service URL:</label>
+                  <input type="text" id="input-backend-url" placeholder="https://silvergrove-a2a-xxxx-uc.a.run.app" style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
+              </div>
+              <div id="config-status" style="font-size:11px;font-weight:600;min-height:16px;"></div>
+          </div>
+          <div class="modal-footer" style="display:flex;gap:10px;margin-top:10px;">
+              <button id="config-reset-btn" class="btn btn-secondary">Use Localhost</button>
+              <button id="config-connect-btn" class="btn btn-primary">Connect Backend</button>
+              <button id="config-close-btn" class="btn btn-secondary">Close</button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    // Configuration utility
+    function getApiBaseUrl() {
+      const savedUrl = localStorage.getItem('silvergrove_api_url');
+      if (savedUrl) return savedUrl.replace(/\/$/, '');
+      return 'https://silvergrove-a2a-1075750421173.us-central1.run.app';
+    }
+
+    // Check backend link
+    const dot = document.getElementById('conn-dot');
+    const text = document.getElementById('conn-text');
+
+    async function checkBackendConnection() {
+      const baseUrl = getApiBaseUrl();
+      try {
+        const res = await fetch(`${baseUrl}/api/alerts`);
+        if (res.ok) {
+          dot.classList.add('online');
+          text.textContent = baseUrl ? 'Cloud Run Connected' : 'Localhost Connected';
+        } else {
+          throw new Error();
+        }
+      } catch {
+        dot.classList.remove('online');
+        text.textContent = 'Disconnected';
+      }
+    }
+
+    // Modal interaction handlers
+    const modalConfig = document.getElementById('modal-config');
+    const inputUrl = document.getElementById('input-backend-url');
+    const configStatus = document.getElementById('config-status');
+
+    document.getElementById('config-backend-btn').addEventListener('click', () => {
+        inputUrl.value = getApiBaseUrl();
+        configStatus.innerText = "";
+        modalConfig.classList.remove('hidden');
+    });
+
+    document.getElementById('config-close-btn').addEventListener('click', () => {
+        modalConfig.classList.add('hidden');
+    });
+
+    document.getElementById('config-reset-btn').addEventListener('click', () => {
+        localStorage.removeItem('silvergrove_api_url');
+        configStatus.style.color = 'var(--color-success)';
+        configStatus.innerText = 'Switched to Localhost backend!';
+        checkBackendConnection();
+        setTimeout(() => modalConfig.classList.add('hidden'), 800);
+    });
+
+    document.getElementById('config-connect-btn').addEventListener('click', async () => {
+        let url = inputUrl.value.trim();
+        if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
+        configStatus.style.color = '#ef4444';
+        configStatus.innerText = 'Testing link...';
+
+        try {
+            const testUrl = url ? url.replace(/\/$/, '') : '';
+            const res = await fetch(`${testUrl}/api/alerts`);
+            if (res.ok) {
+                localStorage.setItem('silvergrove_api_url', testUrl);
+                configStatus.style.color = 'var(--color-success)';
+                configStatus.innerText = 'Connected successfully!';
+                checkBackendConnection();
+                setTimeout(() => modalConfig.classList.add('hidden'), 800);
+            } else {
+                throw new Error();
+            }
+        } catch {
+            configStatus.innerText = 'Link check failed. Ensure service is active and CORs are open.';
+        }
+    });
+
+    // Clear alerts button support
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+        const baseUrl = getApiBaseUrl();
+        try {
+            const res = await fetch(`${baseUrl}/api/alerts`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('Alerts cleared successfully!');
+            } else {
+                throw new Error();
+            }
+        } catch (err) {
+            alert('Failed to clear alerts. Make sure the backend is active.');
+        }
+    });
+
+    const jsonDisplay = document.getElementById('jsonDisplay');
+    const viewerTitle = document.getElementById('viewerTitle');
+
+    function displayMetadata(title, url) {
+      jsonDisplay.textContent = '// Loading metadata card from endpoint...';
+      viewerTitle.textContent = title;
+      
+      const baseUrl = getApiBaseUrl();
+      fetch(`${baseUrl}${url}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          jsonDisplay.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(err => {
+          jsonDisplay.textContent = `// Error loading card: ${err.message}\n\n// You can run the backend service locally to activate A2A endpoint discovery.`;
+        });
+    }
+
+    document.getElementById('btnWellKnown').addEventListener('click', () => {
+      displayMetadata('Root System Discovery Card (/.well-known/agent.json)', '/.well-known/agent.json');
+    });
+
+    document.getElementById('btnAllAgents').addEventListener('click', () => {
+      displayMetadata('Full Agent Registry Card (/a2a/agents)', '/a2a/agents');
+    });
+
+    document.getElementById('nodeSensory').addEventListener('click', () => {
+      displayMetadata('Sensory Guardian Agent Card (/a2a/sensory_guardian/card)', '/a2a/sensory_guardian/card');
+    });
+
+    document.getElementById('nodeMedical').addEventListener('click', () => {
+      displayMetadata('Medical Compliance Agent Card (/a2a/medical_compliance/card)', '/a2a/medical_compliance/card');
+    });
+
+    document.getElementById('nodeCognitive').addEventListener('click', () => {
+      displayMetadata('Cognitive Companion Agent Card (/a2a/cognitive_companion/card)', '/a2a/cognitive_companion/card');
+    });
+
+    document.getElementById('nodeCoordinator').addEventListener('click', () => {
+      displayMetadata('Care Coordinator Agent Card (/a2a/care_coordinator/card)', '/a2a/care_coordinator/card');
+    });
+
+    document.getElementById('nodeFamily').addEventListener('click', () => {
+      displayMetadata('External Family Gateway (/a2a/family_gateway/card)', '/a2a/family_gateway/card');
+    });
+
+    document.getElementById('nodePhysician').addEventListener('click', () => {
+      displayMetadata('External Physician Gateway (/a2a/physician_gateway/card)', '/a2a/physician_gateway/card');
+    });
+
+    // Init
+    checkBackendConnection();
+    setInterval(checkBackendConnection, 8000);
+  </script>
+</body>
+</html>

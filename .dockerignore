@@ -1,0 +1,11 @@
+.git
+.github
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+silvergrove-a2a-510976d01904.json
+.venv
+venv
+ENV

@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverGrove | Interactive System Infographic</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        .infographic-scroll-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 24px;
+        }
+
+        .main-layout {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 24px;
+        }
+
+        /* Sharp Clinical Cards */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            border-left: 3px solid var(--color-primary);
+            padding-left: 10px;
+            font-weight: 700;
+        }
+
+        /* SCENARIO BAR */
+        .scenarios-bar {
+            grid-column: span 2;
+            background: var(--panel-bg);
+            padding: 16px 24px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto 24px;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .scenario-instructions h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .scenario-instructions p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .scenario-btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .s-btn {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .s-btn-normal {
+            background: rgba(22, 163, 74, 0.08);
+            color: var(--color-success);
+            border-color: rgba(22, 163, 74, 0.2);
+        }
+
+        .s-btn-normal.active {
+            background: var(--color-success);
+            color: white;
+            border-color: var(--color-success);
+        }
+
+        .s-btn-warning {
+            background: rgba(245, 158, 11, 0.08);
+            color: var(--color-warning);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .s-btn-warning.active {
+            background: var(--color-warning);
+            color: white;
+            border-color: var(--color-warning);
+        }
+
+        .s-btn-critical {
+            background: rgba(239, 68, 68, 0.08);
+            color: var(--color-danger);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .s-btn-critical.active {
+            background: var(--color-danger);
+            color: white;
+            border-color: var(--color-danger);
+        }
+
+        /* PHYSICAL ECOSYSTEM: HIGH-TECH ISOMETRIC SIMULATION BACKGROUND */
+        .home-simulation-container {
+            position: relative;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.4), rgba(30, 41, 59, 0.3)), url('smart_home_3d.png') no-repeat center center / cover;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            height: 480px;
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: flex-end;
+            padding: 16px;
+        }
+
+        /* Ambient scan lines over the house dissection */
+        .home-simulation-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(rgba(18, 150, 250, 0.03) 50%, rgba(0, 0, 0, 0) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Room Overlay Badges - High Tech Glass HUDs */
+        .room-hud {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px) saturate(160%);
+            border-radius: 8px;
+            padding: 12px;
+            width: 170px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 3;
+            cursor: pointer;
+        }
+
+        .room-hud:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px rgba(2, 132, 199, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .room-hud.active {
+            border-color: var(--color-success);
+            box-shadow: 0 0 20px rgba(22, 163, 74, 0.3);
+        }
+
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+        }
+
+        .hud-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #f8fafc;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hud-icon {
+            font-size: 14px;
+        }
+
+        .hud-telemetry {
+            font-family: monospace;
+            font-size: 10px;
+            color: #38bdf8;
+            line-height: 1.5;
+        }
+
+        /* Placement coordinates over the isometric Sims 3D floor plan layout */
+        .hud-bedroom {
+            top: 4%;
+            left: calc(50% - 90px);
+            width: 180px;
+        }
+
+        .hud-bathroom {
+            top: calc(50% - 60px);
+            left: 3%;
+            width: 170px;
+        }
+
+        .hud-hallway {
+            bottom: 4%;
+            left: calc(50% - 95px);
+            width: 190px;
+        }
+
+        .hud-kitchen {
+            top: calc(50% - 60px);
+            right: 3%;
+            width: 170px;
+        }
+
+        /* 📡 Rotating Radar Scan Overlay inside Bedroom */
+        .radar-scan-node {
+            position: absolute;
+            top: 31%;
+            left: 63%;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 1px dashed rgba(56, 189, 248, 0.25);
+            pointer-events: none;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 80%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transform: translate(-50%, -50%);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, rgba(56, 189, 248, 0.4) 0deg, transparent 90deg, transparent 360deg);
+            animation: radar-sweep-rotation 4s linear infinite;
+        }
+
+        @keyframes radar-sweep-rotation {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 🚶 Hallway Telemetry Gait Vector Path and Pulsing Resident Dot */
+        .hallway-path-svg {
+            position: absolute;
+            top: 50%;
+            left: 25%;
+            width: 50%;
+            height: 80px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .resident-dot {
+            fill: var(--color-primary);
+            filter: drop-shadow(0 0 6px var(--color-primary));
+            animation: move-resident var(--gait-anim-speed, 3.5s) linear infinite;
+        }
+
+        .resident-dot.warning-mode {
+            fill: var(--color-warning);
+            filter: drop-shadow(0 0 6px var(--color-warning));
+        }
+
+        .resident-dot.critical-mode {
+            fill: var(--color-danger);
+            filter: drop-shadow(0 0 6px var(--color-danger));
+        }
+
+        @keyframes move-resident {
+            0% {
+                motion-offset: 0%;
+                offset-distance: 0%;
+            }
+
+            100% {
+                motion-offset: 100%;
+                offset-distance: 100%;
+            }
+        }
+
+        /* 🍳 Kitchen appliance stove thermal rings */
+        .stove-heat-signature {
+            position: absolute;
+            top: 58%;
+            left: 68%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 2;
+            transform: translate(-50%, -50%);
+        }
+
+        .stove-heat-signature.hot {
+            opacity: 1;
+            animation: thermal-pulse 2s infinite;
+        }
+
+        @keyframes thermal-pulse {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(0.9);
+                opacity: 0.4;
+            }
+        }
+
+        /* 🚨 Pulse Sensor Beacons */
+        .sensor-beacon {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--color-primary);
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+            z-index: 4;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: all 0.4s ease;
+        }
+
+        .sensor-beacon::after {
+            content: "";
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 2px solid var(--color-primary);
+            border-radius: 50%;
+            opacity: 0;
+            animation: beacon-ping 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        }
+
+        .sensor-beacon.active {
+            background: var(--color-success);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+        }
+
+        .sensor-beacon.active::after {
+            border-color: var(--color-success);
+        }
+
+        .sensor-beacon.warning-mode {
+            background: var(--color-warning);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+        }
+
+        .sensor-beacon.warning-mode::after {
+            border-color: var(--color-warning);
+        }
+
+        .sensor-beacon.critical-mode {
+            background: var(--color-danger);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+        }
+
+        .sensor-beacon.critical-mode::after {
+            border-color: var(--color-danger);
+        }
+
+        @keyframes beacon-ping {
+            0% {
+                transform: scale(0.6);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+        }
+
+        /* 🕸️ Cyber-Physical Dashed Interconnects */
+        .telemetry-links-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .telemetry-link-line {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 1.5;
+            stroke-dasharray: 4, 6;
+            transition: all 0.5s ease;
+        }
+
+        .telemetry-link-line.active {
+            stroke: rgba(34, 197, 94, 0.35);
+            stroke-width: 2;
+            animation: flow-telemetry 1.5s linear infinite;
+        }
+
+        .telemetry-link-line.warning-mode {
+            stroke: rgba(245, 158, 11, 0.45);
+            stroke-width: 2;
+            animation: flow-telemetry 1s linear infinite;
+        }
+
+        .telemetry-link-line.critical-mode {
+            stroke: rgba(239, 68, 68, 0.55);
+            stroke-width: 2;
+            animation: flow-telemetry 0.6s linear infinite;
+        }
+
+        @keyframes flow-telemetry {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        /* DIGITAL AGENT CONSENSUS PIPELINE REFAC */
+        .agent-circuit {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            padding-left: 36px;
+        }
+
+        .agent-node {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+            z-index: 2;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .agent-node.active {
+            border-color: var(--color-primary);
+            background: rgba(2, 132, 199, 0.06);
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.15);
+        }
+
+        .agent-node.completed {
+            border-color: var(--color-success);
+            background: rgba(22, 163, 74, 0.04);
+            box-shadow: 0 0 15px rgba(22, 163, 74, 0.1);
+        }
+
+        .a-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 6px;
+            background: var(--panel-inner);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .agent-node.active .a-avatar {
+            border-color: var(--color-primary);
+            background: rgba(2, 132, 199, 0.2);
+            color: #38bdf8;
+            animation: pulse-avatar 2s infinite;
+        }
+
+        .agent-node.completed .a-avatar {
+            border-color: var(--color-success);
+            background: rgba(22, 163, 74, 0.2);
+            color: var(--color-success);
+        }
+
+        @keyframes pulse-avatar {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.06);
+                box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .a-desc h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .a-desc p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        /* High-tech status labels on each agent */
+        .agent-status-badge {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .agent-node.active .agent-status-badge {
+            background: rgba(2, 132, 199, 0.15);
+            color: #38bdf8;
+            border-color: rgba(2, 132, 199, 0.3);
+            animation: blink-badge 1.5s infinite;
+        }
+
+        .agent-node.completed .agent-status-badge {
+            background: rgba(22, 163, 74, 0.15);
+            color: var(--color-success);
+            border-color: rgba(22, 163, 74, 0.3);
+        }
+
+        @keyframes blink-badge {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        /* SVG cyber-physical packet path on the left of agents */
+        .pipeline-connector-svg {
+            position: absolute;
+            left: 20px;
+            top: 10px;
+            bottom: 10px;
+            width: 6px;
+            height: calc(100% - 20px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* DEMO LOG CONSOLE & HUD DECISIONS PANEL */
+        .demo-console {
+            background: #090d16;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            font-size: 11px;
+            font-family: monospace;
+            height: 110px;
+            overflow-y: auto;
+            color: #38bdf8;
+            line-height: 1.5;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .console-entry {
+            margin-bottom: 6px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        /* HIGHLIGHT PANEL FOOTER */
+        .portal-stats {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            text-align: center;
+            background: var(--panel-inner);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+        }
+
+        .stat-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* KEYFRAMES */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Gradients -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="portal-container">
+        <!-- HEADER -->
+        <header class="main-header glass-panel">
+            <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                <div class="logo-area">
+                    <div class="logo-icon"
+                        style="display: flex; align-items: center; justify-content: center; height: 64px; width: 128px; border-radius: 4px; overflow: hidden; background: transparent;">
+                        <img src="logo.png" alt="SilverGrove Logo"
+                            style="height: 100%; width: 100%; object-fit: contain;">
+                    </div>
+                    <div class="logo-text">
+                        <h1>SilverGrove</h1>
+                        <p>Ambient Assisted Living Multi-Agent System</p>
+                    </div>
+                </div>
+
+                <nav class="nav-links">
+                    <a href="index.html">Command Center</a>
+                    <a href="a2a-explorer.html">A2A Explorer</a>
+                    <a href="simulation.html" class="active">Simulation</a>
+                    <a href="family-gateway.html">Family App</a>
+                    <a href="physician-gateway.html">Physician EHR</a>
+                </nav>
+            </div>
+
+            <div class="status-bar">
+                <div class="connection-badge" id="conn-badge">
+                    <div class="connection-dot" id="conn-dot"></div>
+                    <span id="conn-text">Checking...</span>
+                </div>
+                <button id="config-backend-btn" class="btn btn-secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Connect Backend
+                </button>
+                <button id="clear-btn" class="btn btn-secondary">Clear Alerts</button>
+            </div>
+        </header>
+
+        <!-- Scrollable content container for body visual alignment -->
+        <div class="infographic-scroll-container">
+
+            <!-- SCENARIOS SELECTION BAR -->
+            <div class="scenarios-bar">
+                <div class="scenario-instructions">
+                    <h3>Interactive Sandbox Simulators</h3>
+                    <p>Select a scenario to trigger and visualize the physical sensor data routing to agent consensus
+                        loops.</p>
+                </div>
+                <div class="scenario-btn-group">
+                    <button class="s-btn s-btn-normal active" id="btn-s-normal">Standard Baseline Day</button>
+                    <button class="s-btn s-btn-warning" id="btn-s-warning">Mild Activity Decline</button>
+                    <button class="s-btn s-btn-critical" id="btn-s-critical">Critical Polypharmacy Anomaly</button>
+                </div>
+            </div>
+
+            <div class="main-layout">
+
+                <!-- LEFT COLUMN: THE PHYSICAL SYSTEM -->
+                <section class="panel">
+                    <h2 class="panel-title">1. Physical Ambient Home Ecosystem</h2>
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        Camera-free, micro-radar health monitoring. Physical sensors monitor location, velocities, and
+                        biometrics privately.
+                    </p>
+
+                    <div class="home-simulation-container" id="home-view">
+                        <!-- 🕸️ Cyber-Physical Dashed Telemetry Interconnect Overlay (800x480 Viewbox) -->
+                        <svg class="telemetry-links-svg" viewBox="0 0 800 480">
+                            <path id="link-bedroom" d="M 400,100 L 504,149" class="telemetry-link-line active" />
+                            <path id="link-bathroom" d="M 202,240 L 256,173" class="telemetry-link-line active" />
+                            <path id="link-kitchen" d="M 598,240 L 544,278" class="telemetry-link-line active" />
+                            <path id="link-hallway" d="M 400,390 L 376,283" class="telemetry-link-line active" />
+                        </svg>
+
+                        <!-- 🚨 Pulse Sensor Beacons -->
+                        <div class="sensor-beacon beacon-bathroom active" id="beacon-bathroom"
+                            style="top: 36%; left: 32%;"></div>
+                        <div class="sensor-beacon beacon-bedroom active" id="beacon-bedroom"
+                            style="top: 31%; left: 63%;"></div>
+                        <div class="sensor-beacon beacon-hallway active" id="beacon-hallway"
+                            style="top: 59%; left: 47%;"></div>
+                        <div class="sensor-beacon beacon-kitchen active" id="beacon-kitchen"
+                            style="top: 58%; left: 68%;"></div>
+
+                        <!-- 📡 Rotating Radar Sweep inside Bedroom (aligned to Bedroom beacon) -->
+                        <div class="radar-scan-node">
+                            <div class="radar-sweep"></div>
+                        </div>
+
+                        <!-- 🚶 Hallway Telemetry Gait Vector Path and Pulsing Resident Dot -->
+                        <svg class="hallway-path-svg" viewBox="0 0 400 100">
+                            <path id="resident-gait-path" d="M 30,50 Q 200,85 370,50" fill="none"
+                                stroke="rgba(56, 189, 248, 0.15)" stroke-width="3" stroke-dasharray="5, 5" />
+                            <circle class="resident-dot" id="gait-dot" r="7" cx="0" cy="0">
+                                <animateMotion id="gait-anim" dur="3.5s" repeatCount="indefinite">
+                                    <mpath href="#resident-gait-path" />
+                                </animateMotion>
+                            </circle>
+                        </svg>
+
+                        <!-- 🍳 Kitchen Stove thermal signature animation (aligned to Kitchen beacon) -->
+                        <div class="stove-heat-signature" id="stove-thermal"></div>
+
+                        <!-- Room overlay 1: Bedroom (Top) -->
+                        <div class="room-hud hud-bedroom" id="hud-bedroom">
+                            <div class="hud-header">
+                                <span class="hud-title">Bedroom</span>
+                                <span class="hud-icon">🛏️</span>
+                            </div>
+                            <div class="hud-telemetry" id="telemetry-bed">
+                                Vital Node: Active<br>
+                                Heart Rate: 72 bpm<br>
+                                Resp Rate: 16 br/m
+                            </div>
+                        </div>
+
+                        <!-- Room overlay 2: Bathroom (Left) -->
+                        <div class="room-hud hud-bathroom" id="hud-bathroom">
+                            <div class="hud-header">
+                                <span class="hud-title">Bathroom</span>
+                                <span class="hud-icon">🚿</span>
+                            </div>
+                            <div class="hud-telemetry" id="telemetry-bath">
+                                Presence: Idle<br>
+                                Floor Sensor: Safe<br>
+                                Average: 4.2 visits/d
+                            </div>
+                        </div>
+
+                        <!-- Room overlay 3: Kitchen (Right) -->
+                        <div class="room-hud hud-kitchen" id="hud-kitchen">
+                            <div class="hud-header">
+                                <span class="hud-title">Kitchen</span>
+                                <span class="hud-icon">🍳</span>
+                            </div>
+                            <div class="hud-telemetry" id="telemetry-kitchen">
+                                Stove Link: Safe<br>
+                                Thermal Index: Normal<br>
+                                Appliance: Off
+                            </div>
+                        </div>
+
+                        <!-- Room overlay 4: Hallway (Bottom) -->
+                        <div class="room-hud hud-hallway" id="hud-hallway">
+                            <div class="hud-header">
+                                <span class="hud-title">Hallway Speed Gate</span>
+                                <span class="hud-icon">🚪</span>
+                            </div>
+                            <div class="hud-telemetry" id="telemetry-hall">
+                                Gait Velocity: 0.85 m/s<br>
+                                Baseline Check: 100%<br>
+                                Path Status: Smooth
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="demo-console" id="console">
+                        <div class="console-entry">[SYSTEM] Sandbox initialized. Click on any room sensor node to probe
+                            its telemetries.</div>
+                    </div>
+                </section>
+
+                <!-- RIGHT COLUMN: THE DIGITAL SYSTEM -->
+                <section class="panel">
+                    <h2 class="panel-title">2. Digital Multi-Agent Consensus Pipeline</h2>
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        Active coordination of 4 ADK agents running over MCP servers to synthesize diagnostic consensus.
+                    </p>
+
+                    <div class="agent-circuit">
+                        <svg class="pipeline-connector-svg">
+                            <line x1="3" y1="0" x2="3" y2="100%" stroke="rgba(255,255,255,0.08)" stroke-width="2"
+                                stroke-dasharray="4, 4" />
+                            <line id="packet-flow-line" x1="3" y1="0" x2="3" y2="100%" stroke="var(--color-success)"
+                                stroke-width="2" stroke-dasharray="8, 80" stroke-dashoffset="0"
+                                style="display: none; animation: animate-packet 3s linear infinite;" />
+                        </svg>
+
+                        <!-- Agent 1: Sensory Guardian -->
+                        <div class="agent-node" id="agent-s">
+                            <div class="a-avatar">🛡️</div>
+                            <div class="a-desc">
+                                <h4>Sensory Guardian Agent</h4>
+                                <p id="desc-s">Waiting for ambient sensor data ingestion...</p>
+                            </div>
+                            <div class="agent-status-badge" id="status-badge-s">Idle</div>
+                        </div>
+
+                        <!-- Agent 2: Medical Compliance -->
+                        <div class="agent-node" id="agent-m">
+                            <div class="a-avatar">🔬</div>
+                            <div class="a-desc">
+                                <h4>Medical Compliance Agent</h4>
+                                <p id="desc-m">Awaiting vital anomaly triggers for correlation...</p>
+                            </div>
+                            <div class="agent-status-badge" id="status-badge-m">Idle</div>
+                        </div>
+
+                        <!-- Agent 3: Cognitive Companion -->
+                        <div class="agent-node" id="agent-c">
+                            <div class="a-avatar">🤝</div>
+                            <div class="a-desc">
+                                <h4>Cognitive Companion Agent</h4>
+                                <p id="desc-c">Awaiting clinical correlation to generate check-in dialogue...</p>
+                            </div>
+                            <div class="agent-status-badge" id="status-badge-c">Idle</div>
+                        </div>
+
+                        <!-- Agent 4: Care Coordinator -->
+                        <div class="agent-node" id="agent-co">
+                            <div class="a-avatar">⚡</div>
+                            <div class="a-desc">
+                                <h4>Care Coordinator Agent</h4>
+                                <p id="desc-co">Waiting to route outbound cryptographic A2A protocol packets...</p>
+                            </div>
+                            <div class="agent-status-badge" id="status-badge-co">Idle</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PORTAL HIGHLIGHT STATS -->
+                <footer class="panel portal-stats">
+                    <div class="stat-card glass-panel-inner">
+                        <div class="stat-val" id="stat-vitality" style="color: var(--color-success)">100%</div>
+                        <div class="stat-label">Resident Safety Index</div>
+                    </div>
+                    <div class="stat-card glass-panel-inner">
+                        <div class="stat-val" id="stat-latency">85ms</div>
+                        <div class="stat-label">Sensor Routing Delay</div>
+                    </div>
+                    <div class="stat-card glass-panel-inner">
+                        <div class="stat-val" id="stat-integrity" style="color: var(--color-info)">SECURE</div>
+                        <div class="stat-label">Privacy Shield Mode</div>
+                    </div>
+                    <div class="stat-card glass-panel-inner">
+                        <div class="stat-val" id="stat-a2a">4 Nodes</div>
+                        <div class="stat-label">Active A2A Protocol Links</div>
+                    </div>
+                </footer>
+
+            </div>
+        </div>
+
+        <script>
+            const sensorLogs = {
+                "bedroom": { name: "Micro-Radar Bed Vital Node", telemetry: "Heart rate: 72 bpm, Resp rate: 16 br/min. Safe sleep quality." },
+                "bathroom": { name: "Bathroom Presence Sensor", telemetry: "Status: Empty. Average daily usage: 4.2 bathroom visits." },
+                "hallway": { name: "Hallway Speed Gate Radar", telemetry: "Gait speed: 0.85 m/s. Normal baseline pace." },
+                "kitchen": { name: "Kitchen Appliance Stove Link", telemetry: "Thermal sensor status: OFF. Safe room temperatures." }
+            };
+
+            // DOM nodes
+            const consoleEl = document.getElementById("console");
+            const packetFlowEl = document.getElementById("packet-flow-line");
+            const gaitDot = document.getElementById("gait-dot");
+            const gaitAnim = document.getElementById("gait-anim");
+            const stoveThermal = document.getElementById("stove-thermal");
+
+            // Click individual room sensor HUDs
+            document.querySelectorAll(".room-hud").forEach(hud => {
+                hud.addEventListener("click", () => {
+                    const sid = hud.id.split("-")[1];
+                    const info = sensorLogs[sid];
+                    if (info) {
+                        hud.classList.add("active");
+                        logToConsole(`[PROBE] Interrogating ${info.name}...`);
+                        logToConsole(`[TELEMETRY] ${info.telemetry}`);
+                        setTimeout(() => hud.classList.remove("active"), 3000);
+                    }
+                });
+            });
+
+            function logToConsole(msg, isHeader = false) {
+                const entry = document.createElement("div");
+                entry.className = "console-entry";
+                if (isHeader) {
+                    entry.style.color = "#38bdf8";
+                    entry.style.fontWeight = "bold";
+                    entry.style.borderBottom = "1px solid rgba(56, 189, 248, 0.15)";
+                    entry.style.paddingBottom = "4px";
+                }
+                entry.innerText = msg;
+                consoleEl.appendChild(entry);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            // SCENARIOS FLOW ENGINE
+            const btnNormal = document.getElementById("btn-s-normal");
+            const btnWarning = document.getElementById("btn-s-warning");
+            const btnCritical = document.getElementById("btn-s-critical");
+
+            const scenarioConfigs = {
+                normal: {
+                    title: "Scenario: Standard Baseline Day",
+                    gaitSpeed: "3.5s",
+                    gaitClass: "",
+                    stoveHot: false,
+                    telemetry: {
+                        bed: "Vital Node: Active<br>Heart Rate: 68 bpm<br>Resp Rate: 15 br/m",
+                        bath: "Presence: Idle<br>Floor Sensor: Safe<br>Average: 4.2 visits/d",
+                        hall: "Gait Velocity: 0.84 m/s<br>Baseline Check: 100%<br>Path Status: Smooth",
+                        kitchen: "Stove Link: Safe<br>Thermal Index: Normal<br>Appliance: Off"
+                    },
+                    consoleLogs: [
+                        "[SYSTEM] Ingesting telemetry streams for Arthur Pendelton...",
+                        "[SENSOR] Bed Micro-Radar reporting normal resting heart rate (68 bpm).",
+                        "[SENSOR] Hallway Speed Gate registers pace at 0.84 m/s (baseline: 0.85 m/s).",
+                        "[AGENT] Sensory Guardian analyzes vital streams: Normal, no anomalies flagged.",
+                        "[SYSTEM] Escalation pipeline halted. Status: Safe and sound."
+                    ],
+                    agents: {
+                        s: { desc: "Sensory Guardian: Checked. No vital/gait anomalies detected." },
+                        m: { desc: "Medical Compliance: Idle (No vital triggers)." },
+                        c: { desc: "Cognitive Companion: Idle." },
+                        co: { desc: "Care Coordinator: Idle." }
+                    },
+                    stats: { vitality: "100%", vitalityColor: "var(--color-success)", latency: "42ms" }
+                },
+                warning: {
+                    title: "Scenario: Mild Activity Decline",
+                    gaitSpeed: "7s",
+                    gaitClass: "warning-mode",
+                    stoveHot: false,
+                    telemetry: {
+                        bed: "Vital Node: Active<br>Heart Rate: 70 bpm<br>Resp Rate: 16 br/m",
+                        bath: "Presence: Idle<br>Floor Sensor: Safe<br>Average: 4.2 visits/d",
+                        hall: "Gait Velocity: 0.73 m/s<br>Baseline Check: 85.9%<br>Path Status: Slower",
+                        kitchen: "Stove Link: Safe<br>Thermal Index: Normal<br>Appliance: Off"
+                    },
+                    consoleLogs: [
+                        "[SYSTEM] Ingesting telemetry streams for Arthur Pendelton...",
+                        "[SENSOR] Hallway Speed Gate registers average gait speed at 0.73 m/s (-14.1% below baseline).",
+                        "[AGENT] Sensory Guardian triggers ADK warning: 'Mild gait speed deceleration detected.'",
+                        "[AGENT] Medical Compliance correlated gait speed change against Donepezil prescription (No interactions found).",
+                        "[AGENT] Cognitive Companion drafts checking dialogue for Arthur: 'I noticed you walked a little slower today.'",
+                        "[AGENT] Care Coordinator dispatches Care Notification to family portal."
+                    ],
+                    agents: {
+                        s: { desc: "Sensory Guardian: Warning flagged. Gait deceleration -14.1%." },
+                        m: { desc: "Medical Compliance: Donepezil checked. No pharmaceutical clash." },
+                        c: { desc: "Cognitive Companion: Warm conversational orientation guide drafted." },
+                        co: { desc: "Care Coordinator: Advisory Care Alert packaged and pushed to B2C dashboard." }
+                    },
+                    stats: { vitality: "92%", vitalityColor: "var(--color-warning)", latency: "88ms" }
+                },
+                critical: {
+                    title: "Scenario: Critical Polypharmacy Anomaly",
+                    gaitSpeed: "12s",
+                    gaitClass: "critical-mode",
+                    stoveHot: true,
+                    telemetry: {
+                        bed: "Vital Node: Active<br>Heart Rate: 88 bpm<br>Resp Rate: 22 br/m",
+                        bath: "Presence: Idle<br>Floor Sensor: Safe<br>Average: 4.2 visits/d",
+                        hall: "Gait Velocity: 0.71 m/s<br>Baseline Check: 83.6%<br>Path Status: Fall Risk",
+                        kitchen: "Stove Link: ALERT<br>Thermal Index: HIGH<br>Appliance: Left Active"
+                    },
+                    consoleLogs: [
+                        "[SYSTEM] Ingesting telemetry streams for Arthur Pendelton...",
+                        "[SENSOR] Bedroom vital telemetry flags heart rate surge at 88 bpm during active state.",
+                        "[SENSOR] Speed Gate registers gait velocity drop to 0.71 m/s (-16.4% change, severe).",
+                        "[AGENT] Sensory Guardian escalates anomaly: 'BP elevated and gait speed slowdown exceeds -15.0% threshold.'",
+                        "[AGENT] Medical Compliance runs FDA check: Correlates beta-blocker Metoprolol prescribed 4 days ago with sudden orthostatic hypotensive risk.",
+                        "[AGENT] Cognitive Companion composes critical safety warning: 'Drink water immediately and rise slowly from chairs.'",
+                        "[AGENT] Care Coordinator issues emergency alert. Routes encrypted B2B packet to Primary Care Physician."
+                    ],
+                    agents: {
+                        s: { desc: "Sensory Guardian: CRITICAL. BP 144/90, Gait slow -16.4%." },
+                        m: { desc: "Medical Compliance: FDA lookup correlates Metoprolol introduction with severe fall/dizziness risks." },
+                        c: { desc: "Cognitive Companion: Prepared urgent check-in dialogue advising water intake and slow standing." },
+                        co: { desc: "Care Coordinator: Cryptographic emergency alert pushed to Physician and Family gateways." }
+                    },
+                    stats: { vitality: "68%", vitalityColor: "var(--color-danger)", latency: "112ms" }
+                }
+            };
+
+            // Track running simulation state to prevent overlap overlaps
+            let isSimulating = false;
+
+            async function runScenario(scenarioKey) {
+                if (isSimulating) return;
+                isSimulating = true;
+
+                // Manage button active classes
+                btnNormal.classList.remove("active");
+                btnWarning.classList.remove("active");
+                btnCritical.classList.remove("active");
+
+                if (scenarioKey === 'normal') btnNormal.classList.add("active");
+                if (scenarioKey === 'warning') btnWarning.classList.add("active");
+                if (scenarioKey === 'critical') btnCritical.classList.add("active");
+
+                const conf = scenarioConfigs[scenarioKey];
+                consoleEl.innerHTML = "";
+                logToConsole(conf.title, true);
+
+                // 1. Swap HUD Telemetry Text live
+                document.getElementById("telemetry-bed").innerHTML = conf.telemetry.bed;
+                document.getElementById("telemetry-bath").innerHTML = conf.telemetry.bath;
+                document.getElementById("telemetry-hall").innerHTML = conf.telemetry.hall;
+                document.getElementById("telemetry-kitchen").innerHTML = conf.telemetry.kitchen;
+
+                // 2. Adjust Walk Vector Speed
+                gaitDot.className = `resident-dot ${conf.gaitClass}`;
+                gaitAnim.setAttribute("dur", conf.gaitSpeed);
+
+                // 3. Stove Thermal Check
+                if (conf.stoveHot) {
+                    stoveThermal.classList.add("hot");
+                } else {
+                    stoveThermal.classList.remove("hot");
+                }
+
+                // 3.5 Update Beacons & Link Lines Classes
+                updateSensorState("bedroom", scenarioKey === 'critical' ? 'critical-mode' : 'active');
+                updateSensorState("bathroom", 'active');
+                updateSensorState("hallway", scenarioKey === 'normal' ? 'active' : (scenarioKey === 'warning' ? 'warning-mode' : 'critical-mode'));
+                updateSensorState("kitchen", scenarioKey === 'critical' ? 'critical-mode' : 'active');
+
+                // 4. Initialize SVG packet flow line
+                packetFlowEl.style.display = "block";
+                packetFlowEl.setAttribute("stroke", scenarioKey === 'normal' ? 'var(--color-success)' : (scenarioKey === 'warning' ? 'var(--color-warning)' : 'var(--color-danger)'));
+
+                // Reset all agent node classes
+                document.querySelectorAll(".agent-node").forEach(n => {
+                    n.className = "agent-node";
+                    const key = n.id.split("-")[1];
+                    document.getElementById(`status-badge-${key}`).innerText = "Idle";
+                });
+
+                // Staggered timeline loop
+                try {
+                    // Ingesting...
+                    logToConsole(conf.consoleLogs[0]);
+                    await delay(800);
+                    logToConsole(conf.consoleLogs[1]);
+                    await delay(800);
+                    logToConsole(conf.consoleLogs[2]);
+                    await delay(800);
+
+                    // --- AGENT 1: Sensory Guardian ---
+                    setNodeState("agent-s", "active", "Sensory Guardian", "PROCESSING...");
+                    logToConsole(conf.consoleLogs[3]);
+                    await delay(1200);
+                    setNodeState("agent-s", "completed", "Sensory Guardian", "COMPLETE", conf.agents.s.desc);
+
+                    if (scenarioKey === 'normal') {
+                        // Normal day ends escalation early
+                        logToConsole(conf.consoleLogs[4]);
+                        setNodeState("agent-m", "", "Medical Compliance", "IDLE");
+                        setNodeState("agent-c", "", "Cognitive Companion", "IDLE");
+                        setNodeState("agent-co", "", "Care Coordinator", "IDLE");
+                    } else {
+                        // --- AGENT 2: Medical Compliance ---
+                        setNodeState("agent-m", "active", "Medical Compliance", "PROCESSING...");
+                        logToConsole(conf.consoleLogs[4]);
+                        await delay(1200);
+                        setNodeState("agent-m", "completed", "Medical Compliance", "COMPLETE", conf.agents.m.desc);
+
+                        // --- AGENT 3: Cognitive Companion ---
+                        setNodeState("agent-c", "active", "Cognitive Companion", "PROCESSING...");
+                        logToConsole(conf.consoleLogs[5]);
+                        await delay(1200);
+                        setNodeState("agent-c", "completed", "Cognitive Companion", "COMPLETE", conf.agents.c.desc);
+
+                        // --- AGENT 4: Care Coordinator ---
+                        setNodeState("agent-co", "active", "Care Coordinator", "PROCESSING...");
+                        logToConsole(conf.consoleLogs[6] || "[SYSTEM] Packaging consensus packets...");
+                        await delay(1200);
+                        setNodeState("agent-co", "completed", "Care Coordinator", "COMPLETE", conf.agents.co.desc);
+                    }
+                } catch (err) {
+                    console.error("Simulation interrupted", err);
+                }
+
+                // Update footer statistics live
+                document.getElementById("stat-vitality").innerText = conf.stats.vitality;
+                document.getElementById("stat-vitality").style.color = conf.stats.vitalityColor;
+                document.getElementById("stat-latency").innerText = conf.stats.latency;
+
+                // Fade out packet flow line ambiently when done
+                setTimeout(() => {
+                    packetFlowEl.style.display = "none";
+                }, 1000);
+
+                isSimulating = false;
+            }
+
+            function setNodeState(id, stateClass, title, badgeText, descOverride = null) {
+                const el = document.getElementById(id);
+                const key = id.split("-")[1];
+                el.className = `agent-node ${stateClass}`;
+                document.getElementById(`status-badge-${key}`).innerText = badgeText;
+                if (descOverride) {
+                    document.getElementById(`desc-${key}`).innerText = descOverride;
+                }
+            }
+
+            function updateSensorState(idPart, stateClass) {
+                const beacon = document.getElementById(`beacon-${idPart}`);
+                const link = document.getElementById(`link-${idPart}`);
+                if (beacon) {
+                    beacon.className = `sensor-beacon beacon-${idPart} ${stateClass}`;
+                }
+                if (link) {
+                    link.setAttribute("class", `telemetry-link-line ${stateClass}`);
+                }
+            }
+
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // Listeners for scenarios
+            btnNormal.addEventListener("click", () => runScenario('normal'));
+            btnWarning.addEventListener("click", () => runScenario('warning'));
+            btnCritical.addEventListener("click", () => runScenario('critical'));
+
+            // Boot initial baseline scenario
+            setTimeout(() => runScenario('normal'), 500);
+        </script>
+
+        <!-- Close infographic scroll container and portal container -->
+    </div>
+    </div>
+
+    <!-- Backend Config Modal -->
+    <div id="modal-config" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <span class="modal-warning-icon"
+                    style="display:flex;align-items:center;justify-content:center;color:var(--color-primary);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                </span>
+                <h2>Connect Cloud Run Backend</h2>
+            </div>
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+                <p style="font-size:13px;color:var(--color-text-muted);">
+                    Specify your Google Cloud Run API Gateway URL to connect this frontend with your active agents.
+                </p>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <label
+                        style="font-size:11px;font-weight:700;color:var(--color-text-primary);text-transform:uppercase;">Cloud
+                        Run Service URL:</label>
+                    <input type="text" id="input-backend-url" placeholder="https://silvergrove-a2a-xxxx-uc.a.run.app"
+                        style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
+                </div>
+                <div id="config-status" style="font-size:11px;font-weight:600;min-height:16px;"></div>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:10px;margin-top:10px;">
+                <button id="config-reset-btn" class="btn btn-secondary">Use Localhost</button>
+                <button id="config-connect-btn" class="btn btn-primary">Connect Backend</button>
+                <button id="config-close-btn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Shared configuration utility
+        function getApiBaseUrl() {
+            const savedUrl = localStorage.getItem('silvergrove_api_url');
+            if (savedUrl) return savedUrl.replace(/\/$/, '');
+            return 'https://silvergrove-a2a-1075750421173.us-central1.run.app';
+        }
+
+        // Shared check backend link
+        const dot = document.getElementById('conn-dot');
+        const text = document.getElementById('conn-text');
+
+        async function checkBackendConnection() {
+            const baseUrl = getApiBaseUrl();
+            try {
+                const res = await fetch(`${baseUrl}/api/alerts`);
+                if (res.ok) {
+                    dot.classList.add('online');
+                    text.textContent = baseUrl ? 'Cloud Run Connected' : 'Localhost Connected';
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                dot.classList.remove('online');
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        // Modal interaction handlers
+        const modalConfig = document.getElementById('modal-config');
+        const inputUrl = document.getElementById('input-backend-url');
+        const configStatus = document.getElementById('config-status');
+
+        document.getElementById('config-backend-btn').addEventListener('click', () => {
+            inputUrl.value = getApiBaseUrl();
+            configStatus.innerText = "";
+            modalConfig.classList.remove('hidden');
+        });
+
+        document.getElementById('config-close-btn').addEventListener('click', () => {
+            modalConfig.classList.add('hidden');
+        });
+
+        document.getElementById('config-reset-btn').addEventListener('click', () => {
+            localStorage.removeItem('silvergrove_api_url');
+            configStatus.style.color = 'var(--color-success)';
+            configStatus.innerText = 'Switched to Localhost backend!';
+            checkBackendConnection();
+            setTimeout(() => modalConfig.classList.add('hidden'), 800);
+        });
+
+        document.getElementById('config-connect-btn').addEventListener('click', async () => {
+            let url = inputUrl.value.trim();
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            configStatus.style.color = '#ef4444';
+            configStatus.innerText = 'Testing link...';
+
+            try {
+                const testUrl = url ? url.replace(/\/$/, '') : '';
+                const res = await fetch(`${testUrl}/api/alerts`);
+                if (res.ok) {
+                    localStorage.setItem('silvergrove_api_url', testUrl);
+                    configStatus.style.color = 'var(--color-success)';
+                    configStatus.innerText = 'Connected successfully!';
+                    checkBackendConnection();
+                    setTimeout(() => modalConfig.classList.add('hidden'), 800);
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                configStatus.innerText = 'Link check failed. Ensure service is active and CORs are open.';
+            }
+        });
+
+        // Clear alerts button support
+        document.getElementById('clear-btn').addEventListener('click', async () => {
+            const baseUrl = getApiBaseUrl();
+            try {
+                const res = await fetch(`${baseUrl}/api/alerts`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert('Alerts cleared successfully!');
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                alert('Failed to clear alerts. Make sure the backend is active.');
+            }
+        });
+
+        // Initialize status badge
+        checkBackendConnection();
+        setInterval(checkBackendConnection, 8000);
+    </script>
+</body>
+
+</html>

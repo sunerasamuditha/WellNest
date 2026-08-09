@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise EHR | Physician Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        .ehr-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .ehr-sidebar {
+            width: 250px;
+            background: #ffffff;
+            border-right: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .folder-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .folder-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .folder-item:hover {
+            background: #f8fafc;
+        }
+
+        .folder-item.active {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-left: 3px solid #0284c7;
+        }
+
+        .ehr-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+
+        .inbox-toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid #cbd5e1;
+            padding: 12px 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .toolbar-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .toolbar-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .messages-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg-row {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        .msg-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 1rem;
+        }
+
+        .msg-meta {
+            font-size: 0.8rem;
+            color: #64748b;
+            display: flex;
+            gap: 16px;
+        }
+
+        .badge-fhir {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .badge-risk {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .json-payload {
+            background: #0f172a;
+            color: #38bdf8;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            padding: 16px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 0;
+            border: 1px solid #1e293b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Gradients -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="portal-container">
+        <!-- HEADER -->
+        <header class="main-header glass-panel">
+            <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                <div class="logo-area">
+                    <div class="logo-icon"
+                        style="display: flex; align-items: center; justify-content: center; height: 64px; width: 128px; border-radius: 4px; overflow: hidden; background: transparent;">
+                        <img src="logo.png" alt="SilverGrove Logo"
+                            style="height: 100%; width: 100%; object-fit: contain;">
+                    </div>
+                    <div class="logo-text">
+                        <h1>SilverGrove</h1>
+                        <p>Ambient Assisted Living Multi-Agent System</p>
+                    </div>
+                </div>
+
+                <nav class="nav-links">
+                    <a href="index.html">Command Center</a>
+                    <a href="a2a-explorer.html">A2A Explorer</a>
+                    <a href="simulation.html">Simulation</a>
+                    <a href="family-gateway.html">Family App</a>
+                    <a href="physician-gateway.html" class="active">Physician EHR</a>
+                </nav>
+            </div>
+
+            <div class="status-bar">
+                <div class="connection-badge" id="conn-badge">
+                    <div class="connection-dot" id="conn-dot"></div>
+                    <span id="conn-text">Checking...</span>
+                </div>
+                <button id="config-backend-btn" class="btn btn-secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Connect Backend
+                </button>
+                <button id="clear-btn" class="btn btn-secondary">Clear Alerts</button>
+            </div>
+        </header>
+
+        <div class="ehr-layout glass-panel" style="margin-top: 24px; border-radius: 12px; overflow: hidden; flex: 1; min-height: 0;">
+        <div class="ehr-sidebar">
+            <div style="padding: 16px 20px; font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                A2A Routing
+            </div>
+            <ul class="folder-list">
+                <li class="folder-item active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    FHIR Inbox (SilverGrove)
+                </li>
+                <li class="folder-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Scheduled Reviews
+                </li>
+                <li class="folder-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    EHR Patient Files
+                </li>
+            </ul>
+        </div>
+
+        <div class="ehr-main">
+            <div class="inbox-toolbar">
+                <button class="toolbar-btn" onclick="fetchMessages()">Refresh Inbox</button>
+                <button class="toolbar-btn">Attach to Chart</button>
+                <button class="toolbar-btn">Acknowledge</button>
+            </div>
+            
+            <div class="messages-list" id="ehr-container">
+                <div class="empty-state">No pending HL7 FHIR observations in the A2A routing queue.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getApiBaseUrl() {
+            const savedUrl = localStorage.getItem('silvergrove_api_url');
+            if (savedUrl) return savedUrl.replace(/\/$/, '');
+            return 'https://silvergrove-a2a-1075750421173.us-central1.run.app';
+        }
+
+        async function fetchMessages() {
+            try {
+                const res = await fetch(`${getApiBaseUrl()}/api/physician/inbox`);
+                if (!res.ok) return;
+                const messages = await res.json();
+                
+                const container = document.getElementById("ehr-container");
+                if (messages.length === 0) {
+                    container.innerHTML = `<div class="empty-state">No pending HL7 FHIR observations in the A2A routing queue.</div>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+                messages.forEach(msg => {
+                    const row = document.createElement("div");
+                    row.className = "msg-row";
+                    
+                    const time = new Date(msg.received_at).toLocaleString();
+                    
+                    row.innerHTML = `
+                        <div class="msg-header">
+                            <div class="msg-title">New Remote Telemetry Observation [Patient: ${msg.patient_identifier}]</div>
+                            <div class="msg-meta">
+                                <span>${time}</span>
+                                <span class="badge-fhir">HL7 FHIR R4</span>
+                                <span class="badge-risk">${msg.risk_severity}</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #475569;">
+                            <strong>Integrity Hash:</strong> <span style="font-family: monospace;">${msg.integrity_sha256 ? msg.integrity_sha256.substring(0, 24) + '...' : 'N/A'}</span>
+                        </div>
+                        <pre class="json-payload">${JSON.stringify(msg, null, 2)}</pre>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (e) {
+                console.error("Failed to fetch EHR messages", e);
+            }
+        }
+
+        fetchMessages();
+        setInterval(fetchMessages, 4000);
+
+        // Check backend link
+        const dot = document.getElementById('conn-dot');
+        const text = document.getElementById('conn-text');
+
+        async function checkBackendConnection() {
+            const baseUrl = getApiBaseUrl();
+            try {
+                const res = await fetch(`${baseUrl}/api/alerts`);
+                if (res.ok) {
+                    dot.classList.add('online');
+                    text.textContent = baseUrl ? 'Cloud Run Connected' : 'Localhost Connected';
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                dot.classList.remove('online');
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        // Modal interaction handlers
+        const modalConfig = document.getElementById('modal-config');
+        const inputUrl = document.getElementById('input-backend-url');
+        const configStatus = document.getElementById('config-status');
+
+        document.getElementById('config-backend-btn').addEventListener('click', () => {
+            inputUrl.value = getApiBaseUrl();
+            configStatus.innerText = "";
+            modalConfig.classList.remove('hidden');
+        });
+
+        document.getElementById('config-close-btn').addEventListener('click', () => {
+            modalConfig.classList.add('hidden');
+        });
+
+        document.getElementById('config-reset-btn').addEventListener('click', () => {
+            localStorage.removeItem('silvergrove_api_url');
+            configStatus.style.color = 'var(--color-success)';
+            configStatus.innerText = 'Switched to Localhost backend!';
+            checkBackendConnection();
+            setTimeout(() => modalConfig.classList.add('hidden'), 800);
+        });
+
+        document.getElementById('config-connect-btn').addEventListener('click', async () => {
+            let url = inputUrl.value.trim();
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            configStatus.style.color = '#ef4444';
+            configStatus.innerText = 'Testing link...';
+
+            try {
+                const testUrl = url ? url.replace(/\/$/, '') : '';
+                const res = await fetch(`${testUrl}/api/alerts`);
+                if (res.ok) {
+                    localStorage.setItem('silvergrove_api_url', testUrl);
+                    configStatus.style.color = 'var(--color-success)';
+                    configStatus.innerText = 'Connected successfully!';
+                    checkBackendConnection();
+                    setTimeout(() => modalConfig.classList.add('hidden'), 800);
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                configStatus.innerText = 'Link check failed. Ensure service is active and CORs are open.';
+            }
+        });
+
+        // Clear alerts button support
+        document.getElementById('clear-btn').addEventListener('click', async () => {
+            const baseUrl = getApiBaseUrl();
+            try {
+                const res = await fetch(`${baseUrl}/api/alerts`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert('Alerts cleared successfully!');
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                alert('Failed to clear alerts. Make sure the backend is active.');
+            }
+        });
+
+        // Init
+        checkBackendConnection();
+        setInterval(checkBackendConnection, 8000);
+    </script>
+    </div> <!-- End portal-container -->
+
+    <!-- Backend Config Modal -->
+    <div id="modal-config" class="modal hidden">
+        <div class="modal-content glass-panel" style="max-width: 450px;">
+            <div class="modal-header">
+                <span class="modal-warning-icon"
+                    style="display:flex;align-items:center;justify-content:center;color:var(--color-primary);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                </span>
+                <h2>Connect Cloud Run Backend</h2>
+            </div>
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+                <p style="font-size:13px;color:var(--color-text-muted);">
+                    Specify your Google Cloud Run API Gateway URL to connect this frontend with your active agents.
+                </p>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <label
+                        style="font-size:11px;font-weight:700;color:var(--color-text-primary);text-transform:uppercase;">Cloud
+                        Run Service URL:</label>
+                    <input type="text" id="input-backend-url" placeholder="https://silvergrove-a2a-xxxx-uc.a.run.app"
+                        style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
+                </div>
+                <div id="config-status" style="font-size:11px;font-weight:600;min-height:16px;"></div>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:10px;margin-top:10px;">
+                <button id="config-reset-btn" class="btn btn-secondary">Use Localhost</button>
+                <button id="config-connect-btn" class="btn btn-primary">Connect Backend</button>
+                <button id="config-close-btn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

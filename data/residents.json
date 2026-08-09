@@ -1,0 +1,134 @@
+{
+  "martha_001": {
+    "id": "martha_001",
+    "name": "Martha Reynolds",
+    "age": 78,
+    "conditions": ["Hypertension", "Type 2 Diabetes"],
+    "medications": [
+      {
+        "name": "Metoprolol Succinate",
+        "brand_name": "Toprol-XL",
+        "dose": "50mg",
+        "frequency": "Once daily",
+        "started_date": "2026-05-23",
+        "purpose": "High blood pressure / Heart rate control"
+      },
+      {
+        "name": "Lisinopril",
+        "brand_name": "Prinivil",
+        "dose": "10mg",
+        "frequency": "Once daily",
+        "started_date": "2026-01-15",
+        "purpose": "Hypertension management"
+      },
+      {
+        "name": "Metformin HCl",
+        "brand_name": "Glucophage",
+        "dose": "500mg",
+        "frequency": "Twice daily with meals",
+        "started_date": "2025-03-01",
+        "purpose": "Type 2 Diabetes glycemic control"
+      }
+    ],
+    "baselines": {
+      "heart_rate_bpm": 74,
+      "bp_systolic": 130,
+      "bp_diastolic": 80,
+      "gait_speed_ms": 0.85,
+      "sleep_hours": 7.2
+    }
+  },
+  "arthur_002": {
+    "id": "arthur_002",
+    "name": "Arthur Pendelton",
+    "age": 82,
+    "conditions": ["Early-Stage Alzheimer's", "Osteoarthritis"],
+    "medications": [
+      {
+        "name": "Donepezil HCl",
+        "brand_name": "Aricept",
+        "dose": "10mg",
+        "frequency": "Once daily at bedtime",
+        "started_date": "2025-11-10",
+        "purpose": "Cognitive symptoms of Alzheimer's"
+      },
+      {
+        "name": "Acetaminophen",
+        "brand_name": "Tylenol ER",
+        "dose": "650mg",
+        "frequency": "Every 8 hours as needed",
+        "started_date": "2024-08-05",
+        "purpose": "Joint pain management"
+      }
+    ],
+    "baselines": {
+      "heart_rate_bpm": 68,
+      "bp_systolic": 124,
+      "bp_diastolic": 76,
+      "gait_speed_ms": 0.65,
+      "sleep_hours": 6.8
+    }
+  },
+  "clara_003": {
+    "id": "clara_003",
+    "name": "Clara Higgins",
+    "age": 76,
+    "conditions": ["Parkinson's Disease", "Orthostatic Hypotension"],
+    "medications": [
+      {
+        "name": "Carbidopa-Levodopa",
+        "brand_name": "Sinemet",
+        "dose": "25-100mg",
+        "frequency": "Three times daily",
+        "started_date": "2026-05-24",
+        "purpose": "Parkinson's motor symptoms and rigidity control"
+      },
+      {
+        "name": "Midodrine HCl",
+        "brand_name": "Orvaten",
+        "dose": "5mg",
+        "frequency": "Three times daily during daytime",
+        "started_date": "2025-09-12",
+        "purpose": "Prevention of orthostatic blood pressure drops"
+      }
+    ],
+    "baselines": {
+      "heart_rate_bpm": 72,
+      "bp_systolic": 118,
+      "bp_diastolic": 74,
+      "gait_speed_ms": 0.58,
+      "sleep_hours": 6.0
+    }
+  },
+  "james_004": {
+    "id": "james_004",
+    "name": "James Sterling",
+    "age": 80,
+    "conditions": ["Post-Op Hip Replacement", "Atrial Fibrillation"],
+    "medications": [
+      {
+        "name": "Oxycodone HCl",
+        "brand_name": "Roxicodone",
+        "dose": "5mg",
+        "frequency": "Every 6 hours as needed for severe pain",
+        "started_date": "2026-05-25",
+        "purpose": "Severe post-surgical pain control"
+      },
+      {
+        "name": "Apixaban",
+        "brand_name": "Eliquis",
+        "dose": "5mg",
+        "frequency": "Twice daily",
+        "started_date": "2024-04-10",
+        "purpose": "Stroke prevention in atrial fibrillation"
+      }
+    ],
+    "baselines": {
+      "heart_rate_bpm": 80,
+      "bp_systolic": 135,
+      "bp_diastolic": 82,
+      "gait_speed_ms": 0.70,
+      "sleep_hours": 7.5
+    }
+  }
+}

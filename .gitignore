@@ -1,0 +1,39 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# Local configuration and keys
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+client_secret*.json
+silvergrove-a2a-*.json
+*.json.key
+gcp-key.json
+
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
+
+# Local DB/Logs
+*.log
+*.sqlite
+data/db.sqlite3
+data/alerts_timeline.json
