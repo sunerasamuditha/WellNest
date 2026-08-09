@@ -6,9 +6,9 @@ on:
       - main
 
 env:
-  PROJECT_ID: silvergrove-a2a
+  PROJECT_ID: wellnest-a2a
   REGION: us-central1
-  SERVICE_NAME: silvergrove-a2a
+  SERVICE_NAME: wellnest-a2a
 
 jobs:
   deploy:

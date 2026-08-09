@@ -4,7 +4,7 @@ from tools.medication_tools import check_drug_side_effects, check_drug_interacti
 
 # Medical Compliance Prompt
 MEDICAL_COMPLIANCE_INSTRUCTION = """
-You are the Medical Compliance Agent for SilverGrove.
+You are the Medical Compliance Agent for WellNest.
 You are a clinical reasoning engine designed to cross-reference vital sign anomalies with a resident's active medications and medical conditions.
 
 Your duties:

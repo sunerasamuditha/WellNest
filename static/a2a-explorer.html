@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SilverGrove A2A - Protocol Explorer</title>
+  <title>WellNest A2A - Protocol Explorer</title>
   <link rel="stylesheet" href="index.css">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -329,10 +329,10 @@
       <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
           <div class="logo-area">
               <div class="logo-icon" style="display: flex; align-items: center; justify-content: center; height: 64px; width: 128px; border-radius: 4px; overflow: hidden; background: transparent;">
-                  <img src="logo.png" alt="SilverGrove Logo" style="height: 100%; width: 100%; object-fit: contain;">
+                  <img src="logo.png" alt="WellNest Logo" style="height: 100%; width: 100%; object-fit: contain;">
               </div>
               <div class="logo-text">
-                  <h1>SilverGrove</h1>
+                  <h1>WellNest</h1>
                   <p>Ambient Assisted Living Multi-Agent System</p>
               </div>
           </div>
@@ -385,7 +385,7 @@
           <span class="ep-route">/a2a/agents</span>
         </div>
         <h3 class="ep-title">All Agents Registry</h3>
-        <p class="ep-desc">Inspect capabilities, system URLs, and clinical skills of all 4 autonomous agents executing inside the SilverGrove system.</p>
+        <p class="ep-desc">Inspect capabilities, system URLs, and clinical skills of all 4 autonomous agents executing inside the WellNest system.</p>
         <button class="view-btn" id="btnAllAgents">Inspect Full Registry</button>
       </div>
     </div>
@@ -498,7 +498,7 @@
               </p>
               <div style="display:flex;flex-direction:column;gap:6px;">
                   <label style="font-size:11px;font-weight:700;color:var(--color-text-primary);text-transform:uppercase;">Cloud Run Service URL:</label>
-                  <input type="text" id="input-backend-url" placeholder="https://silvergrove-a2a-xxxx-uc.a.run.app" style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
+                  <input type="text" id="input-backend-url" placeholder="https://wellnest-xxxx-uc.a.run.app" style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
               </div>
               <div id="config-status" style="font-size:11px;font-weight:600;min-height:16px;"></div>
           </div>
@@ -513,9 +513,9 @@
   <script>
     // Configuration utility
     function getApiBaseUrl() {
-      const savedUrl = localStorage.getItem('silvergrove_api_url');
+      const savedUrl = localStorage.getItem('wellnest_api_url');
       if (savedUrl) return savedUrl.replace(/\/$/, '');
-      return 'https://silvergrove-a2a-1075750421173.us-central1.run.app';
+      return '';
     }
 
     // Check backend link
@@ -554,7 +554,7 @@
     });
 
     document.getElementById('config-reset-btn').addEventListener('click', () => {
-        localStorage.removeItem('silvergrove_api_url');
+        localStorage.removeItem('wellnest_api_url');
         configStatus.style.color = 'var(--color-success)';
         configStatus.innerText = 'Switched to Localhost backend!';
         checkBackendConnection();
@@ -573,7 +573,7 @@
             const testUrl = url ? url.replace(/\/$/, '') : '';
             const res = await fetch(`${testUrl}/api/alerts`);
             if (res.ok) {
-                localStorage.setItem('silvergrove_api_url', testUrl);
+                localStorage.setItem('wellnest_api_url', testUrl);
                 configStatus.style.color = 'var(--color-success)';
                 configStatus.innerText = 'Connected successfully!';
                 checkBackendConnection();

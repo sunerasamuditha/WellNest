@@ -35,7 +35,7 @@ def export_pdf_report(resident_id: str, title: str, report_content: str) -> str:
         
         # Header
         pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, txt="SilverGrove Health Dashboard", ln=True, align='C')
+        pdf.cell(200, 10, txt="WellNest Health Dashboard", ln=True, align='C')
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(200, 10, txt=f"Clinical Analysis Report: {resident_id}", ln=True, align='C')
         
@@ -84,7 +84,7 @@ def export_pdf_report(resident_id: str, title: str, report_content: str) -> str:
 
 
 CLINICAL_ANALYST_INSTRUCTION = """
-You are the Clinical Analyst Agent for SilverGrove.
+You are the Clinical Analyst Agent for WellNest.
 Your primary role is to synthesize historical health telemetry, alerts, and medical compliance data to generate professional, enterprise-grade clinical reports for physicians.
 
 Your duties:

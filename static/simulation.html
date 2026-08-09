@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SilverGrove | Interactive System Infographic</title>
+    <title>WellNest | Interactive System Infographic</title>
     <!-- Google Fonts: Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -688,11 +688,11 @@
                 <div class="logo-area">
                     <div class="logo-icon"
                         style="display: flex; align-items: center; justify-content: center; height: 64px; width: 128px; border-radius: 4px; overflow: hidden; background: transparent;">
-                        <img src="logo.png" alt="SilverGrove Logo"
+                        <img src="logo.png" alt="WellNest Logo"
                             style="height: 100%; width: 100%; object-fit: contain;">
                     </div>
                     <div class="logo-text">
-                        <h1>SilverGrove</h1>
+                        <h1>WellNest</h1>
                         <p>Ambient Assisted Living Multi-Agent System</p>
                     </div>
                 </div>
@@ -1231,7 +1231,7 @@
                     <label
                         style="font-size:11px;font-weight:700;color:var(--color-text-primary);text-transform:uppercase;">Cloud
                         Run Service URL:</label>
-                    <input type="text" id="input-backend-url" placeholder="https://silvergrove-a2a-xxxx-uc.a.run.app"
+                    <input type="text" id="input-backend-url" placeholder="https://wellnest-xxxx-uc.a.run.app"
                         style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
                 </div>
                 <div id="config-status" style="font-size:11px;font-weight:600;min-height:16px;"></div>
@@ -1247,9 +1247,9 @@
     <script>
         // Shared configuration utility
         function getApiBaseUrl() {
-            const savedUrl = localStorage.getItem('silvergrove_api_url');
+            const savedUrl = localStorage.getItem('wellnest_api_url');
             if (savedUrl) return savedUrl.replace(/\/$/, '');
-            return 'https://silvergrove-a2a-1075750421173.us-central1.run.app';
+            return '';
         }
 
         // Shared check backend link
@@ -1288,7 +1288,7 @@
         });
 
         document.getElementById('config-reset-btn').addEventListener('click', () => {
-            localStorage.removeItem('silvergrove_api_url');
+            localStorage.removeItem('wellnest_api_url');
             configStatus.style.color = 'var(--color-success)';
             configStatus.innerText = 'Switched to Localhost backend!';
             checkBackendConnection();
@@ -1307,7 +1307,7 @@
                 const testUrl = url ? url.replace(/\/$/, '') : '';
                 const res = await fetch(`${testUrl}/api/alerts`);
                 if (res.ok) {
-                    localStorage.setItem('silvergrove_api_url', testUrl);
+                    localStorage.setItem('wellnest_api_url', testUrl);
                     configStatus.style.color = 'var(--color-success)';
                     configStatus.innerText = 'Connected successfully!';
                     checkBackendConnection();

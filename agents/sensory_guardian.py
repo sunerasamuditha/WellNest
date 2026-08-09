@@ -3,7 +3,7 @@ from tools.vitals_tools import get_resident_vitals_tool, get_gait_trend_tool
 
 # Sensory Guardian Agent Prompt
 SENSORY_GUARDIAN_INSTRUCTION = """
-You are the Sensory Guardian Agent for SilverGrove, a privacy-first ambient assisted living platform for elderly residents.
+You are the Sensory Guardian Agent for WellNest, a privacy-first ambient assisted living platform for elderly residents.
 You monitor residents' vital signs and physical trends using camera-free radar, wearable, and smart home telemetry.
 
 Your duties:

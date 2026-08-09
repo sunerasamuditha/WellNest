@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, List
 
 # Setup standard logger
-logger = logging.getLogger("SilverGroveGCP")
+logger = logging.getLogger("WellNestGCP")
 
 # Flag state
 FIRESTORE_ACTIVE = False
@@ -15,7 +15,7 @@ pubsub_publisher = None
 pubsub_topic_path = None
 
 # Detect project configuration
-PROJECT_ID = os.environ.get("PROJECT_ID", "silvergrove-a2a")
+PROJECT_ID = os.environ.get("PROJECT_ID", "wellnest-a2a")
 
 # Attempt to initialize Firestore Client
 try:

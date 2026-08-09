@@ -15,7 +15,7 @@ from services.gcp_service import get_resident_profile_db
 #    the Model Context Protocol (stdio transport) for external agent discovery.
 # 2. Direct Import: ADK agents in the local pipeline import these same functions
 #    directly (via tools/vitals_tools.py) for zero-latency in-process tool calls.
-mcp = FastMCP("SilverGroveVitalsServer")
+mcp = FastMCP("WellNestVitalsServer")
 
 # Path to residents database
 DATA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

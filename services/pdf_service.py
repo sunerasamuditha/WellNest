@@ -34,7 +34,7 @@ def generate_local_pdf(resident_id: str) -> str:
         
         # Header
         pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, txt="SilverGrove Health Dashboard", ln=True, align='C')
+        pdf.cell(200, 10, txt="WellNest Health Dashboard", ln=True, align='C')
         pdf.set_font("Arial", 'B', 14)
         pdf.cell(200, 10, txt=f"Clinical Activity Report: {resident_id}", ln=True, align='C')
         pdf.ln(10)

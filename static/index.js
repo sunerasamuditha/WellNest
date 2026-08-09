@@ -1,4 +1,4 @@
-// SilverGrove Unified Command Center
+// WellNest Unified Command Center
 // All agent progress is driven by real-time SSE events from the backend.
 // No fake delays. Every visual update comes from actual backend execution.
 
@@ -18,7 +18,7 @@ let liveTrajectory = {
 };
 
 function getApiBaseUrl() {
-    return localStorage.getItem("silvergrove_api_url") || "https://silvergrove-a2a-1075750421173.us-central1.run.app";
+    return localStorage.getItem("wellnest_api_url") || "";
 }
 
 // ============================================================
@@ -97,7 +97,7 @@ function closeConfigModal() {
 }
 
 function resetConfigToLocal() {
-    localStorage.removeItem("silvergrove_api_url");
+    localStorage.removeItem("wellnest_api_url");
     document.getElementById("config-status").style.color = "var(--color-success)";
     document.getElementById("config-status").innerText = "Switched to Localhost backend!";
     setTimeout(() => { closeConfigModal(); window.location.reload(); }, 1000);
@@ -118,7 +118,7 @@ async function connectToBackend() {
     try {
         const res = await fetch(url + "/api/residents");
         if (res.ok) {
-            localStorage.setItem("silvergrove_api_url", url);
+            localStorage.setItem("wellnest_api_url", url);
             document.getElementById("config-status").style.color = "var(--color-success)";
             document.getElementById("config-status").innerText = "Connected successfully!";
             setTimeout(() => { closeConfigModal(); window.location.reload(); }, 1000);
@@ -317,7 +317,7 @@ function triggerAgentCheck() {
     document.getElementById('tab-terminal').classList.add('active');
 
     // Update terminal status
-    document.getElementById('terminal-status').textContent = `silvergrove://running/${activeResidentId}`;
+    document.getElementById('terminal-status').textContent = `wellnest://running/${activeResidentId}`;
 
     // Set initial agent state
     setAgentStatus("sensory", "Analyzing Vitals", "status-running");
@@ -351,7 +351,7 @@ function triggerAgentCheck() {
         sseSource = null;
         btn.disabled = false;
         btn.innerText = "Run Multi-Agent Health Check";
-        document.getElementById('terminal-status').textContent = 'silvergrove://complete';
+        document.getElementById('terminal-status').textContent = 'wellnest://complete';
 
         isHealthCheckRunning = false;
         startVitalsPolling();

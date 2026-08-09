@@ -29,10 +29,10 @@ from tools.trace_events import TraceCollector
 session_service = InMemorySessionService()
 
 # Create standard ADK Runners for all 4 agents
-sensory_runner = Runner(agent=sensory_guardian_agent, app_name="silvergrove", session_service=session_service, auto_create_session=True)
-compliance_runner = Runner(agent=medical_compliance_agent, app_name="silvergrove", session_service=session_service, auto_create_session=True)
-companion_runner = Runner(agent=cognitive_companion_agent, app_name="silvergrove", session_service=session_service, auto_create_session=True)
-coordinator_runner = Runner(agent=care_coordinator_agent, app_name="silvergrove", session_service=session_service, auto_create_session=True)
+sensory_runner = Runner(agent=sensory_guardian_agent, app_name="wellnest", session_service=session_service, auto_create_session=True)
+compliance_runner = Runner(agent=medical_compliance_agent, app_name="wellnest", session_service=session_service, auto_create_session=True)
+companion_runner = Runner(agent=cognitive_companion_agent, app_name="wellnest", session_service=session_service, auto_create_session=True)
+coordinator_runner = Runner(agent=care_coordinator_agent, app_name="wellnest", session_service=session_service, auto_create_session=True)
 
 def invoke_agent(runner: Runner, prompt: str, user_id: str, session_id: str, collector: TraceCollector = None) -> str:
     """
@@ -159,9 +159,9 @@ class AsyncEventBus:
             for q in self.subscribers[topic]:
                 await q.put(payload)
 
-class SilverGroveOrchestrator:
+class WellNestOrchestrator:
     """
-    SilverGrove Multi-Agent Orchestrator.
+    WellNest Multi-Agent Orchestrator.
     Coordinates execution using a true Asynchronous Event Bus.
     Agents publish and subscribe to clinical events independently.
     Retains long-term episodic memory via persistent session IDs.
@@ -373,7 +373,7 @@ class SilverGroveOrchestrator:
 
 if __name__ == "__main__":
     # Test orchestrator locally
-    orchestrator = SilverGroveOrchestrator()
+    orchestrator = WellNestOrchestrator()
     collector = TraceCollector("test_session")
     res = orchestrator.run_health_check("martha_001", collector)
     print("\n--- HEALTH CHECK SUMMARY ---")

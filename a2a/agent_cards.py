@@ -2,10 +2,10 @@
 
 def get_root_agent_card(base_url: str = "") -> dict:
     """
-    Root agent representing the primary SilverGrove system gateway (Care Coordinator).
+    Root agent representing the primary WellNest system gateway (Care Coordinator).
     """
     return {
-        "name": "SilverGrove Care Gateway",
+        "name": "WellNest Care Gateway",
         "description": "Primary clinical communication and coordinator agent gateway for elderly AAL environments",
         "version": "1.0.0",
         "url": f"{base_url}/a2a/care-coordinator",
@@ -31,7 +31,7 @@ def get_all_agent_cards(base_url: str = "") -> dict:
     """
     return {
         "sensory_guardian": {
-            "name": "SilverGrove Sensory Guardian",
+            "name": "WellNest Sensory Guardian",
             "description": "Privacy-first ambient radar and vital signs telemetry monitoring agent",
             "version": "1.0.0",
             "url": f"{base_url}/a2a/sensory-guardian",
@@ -51,7 +51,7 @@ def get_all_agent_cards(base_url: str = "") -> dict:
             }
         },
         "medical_compliance": {
-            "name": "SilverGrove Medical Compliance",
+            "name": "WellNest Medical Compliance",
             "description": "Clinical reasoning correlation engine cross-referencing anomalies with medication side-effects and drug interactions",
             "version": "1.0.0",
             "url": f"{base_url}/a2a/medical-compliance",
@@ -71,7 +71,7 @@ def get_all_agent_cards(base_url: str = "") -> dict:
             }
         },
         "cognitive_companion": {
-            "name": "SilverGrove Cognitive Companion",
+            "name": "WellNest Cognitive Companion",
             "description": "Empathetic conversational companion interface for active checking and senior resident advisory",
             "version": "1.0.0",
             "url": f"{base_url}/a2a/cognitive-companion",
@@ -92,7 +92,7 @@ def get_all_agent_cards(base_url: str = "") -> dict:
         },
         "care_coordinator": get_root_agent_card(base_url),
         "family_gateway": {
-            "name": "SilverGrove Family Agent Gateway",
+            "name": "WellNest Family Agent Gateway",
             "description": "Self-hosted A2A endpoint for dispatching human-readable clinical alerts to the resident's verified family proxy application",
             "version": "1.0.0",
             "url": f"{base_url}/a2a/family-gateway/inbox",
@@ -112,7 +112,7 @@ def get_all_agent_cards(base_url: str = "") -> dict:
             }
         },
         "physician_gateway": {
-            "name": "SilverGrove Physician EHR Gateway",
+            "name": "WellNest Physician EHR Gateway",
             "description": "Self-hosted A2A endpoint for dispatching HL7 FHIR R4 Observations to the primary care physician's EHR review queue",
             "version": "1.0.0",
             "url": f"{base_url}/a2a/physician-gateway/fhir-ingest",

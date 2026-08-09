@@ -15,7 +15,7 @@ def listen_for_family_alerts():
     Polls the local event bus (alerts_timeline.json) for new alerts.
     """
     print("==================================================")
-    print(" SilverGrove A2A Client: FAMILY AGENT ACTIVE      ")
+    print(" WellNest A2A Client: FAMILY AGENT ACTIVE      ")
     print(" Listening for secure health notifications...     ")
     print("==================================================\n")
     

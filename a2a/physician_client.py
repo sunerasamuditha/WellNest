@@ -16,7 +16,7 @@ def listen_for_physician_alerts():
     Filters out INFO level alerts, prioritizing WARNING and CRITICAL.
     """
     print("==================================================")
-    print(" SilverGrove A2A Client: PHYSICIAN CLINIC ACTIVE  ")
+    print(" WellNest A2A Client: PHYSICIAN CLINIC ACTIVE  ")
     print(" Connected to EHR integration event bus...        ")
     print("==================================================\n")
     

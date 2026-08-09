@@ -172,11 +172,11 @@
                 <div class="logo-area">
                     <div class="logo-icon"
                         style="display: flex; align-items: center; justify-content: center; height: 64px; width: 128px; border-radius: 4px; overflow: hidden; background: transparent;">
-                        <img src="logo.png" alt="SilverGrove Logo"
+                        <img src="logo.png" alt="WellNest Logo"
                             style="height: 100%; width: 100%; object-fit: contain;">
                     </div>
                     <div class="logo-text">
-                        <h1>SilverGrove</h1>
+                        <h1>WellNest</h1>
                         <p>Ambient Assisted Living Multi-Agent System</p>
                     </div>
                 </div>
@@ -215,7 +215,7 @@
             <ul class="folder-list">
                 <li class="folder-item active">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                    FHIR Inbox (SilverGrove)
+                    FHIR Inbox (WellNest)
                 </li>
                 <li class="folder-item">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -243,9 +243,9 @@
 
     <script>
         function getApiBaseUrl() {
-            const savedUrl = localStorage.getItem('silvergrove_api_url');
+            const savedUrl = localStorage.getItem('wellnest_api_url');
             if (savedUrl) return savedUrl.replace(/\/$/, '');
-            return 'https://silvergrove-a2a-1075750421173.us-central1.run.app';
+            return '';
         }
 
         async function fetchMessages() {
@@ -327,7 +327,7 @@
         });
 
         document.getElementById('config-reset-btn').addEventListener('click', () => {
-            localStorage.removeItem('silvergrove_api_url');
+            localStorage.removeItem('wellnest_api_url');
             configStatus.style.color = 'var(--color-success)';
             configStatus.innerText = 'Switched to Localhost backend!';
             checkBackendConnection();
@@ -346,7 +346,7 @@
                 const testUrl = url ? url.replace(/\/$/, '') : '';
                 const res = await fetch(`${testUrl}/api/alerts`);
                 if (res.ok) {
-                    localStorage.setItem('silvergrove_api_url', testUrl);
+                    localStorage.setItem('wellnest_api_url', testUrl);
                     configStatus.style.color = 'var(--color-success)';
                     configStatus.innerText = 'Connected successfully!';
                     checkBackendConnection();
@@ -402,7 +402,7 @@
                     <label
                         style="font-size:11px;font-weight:700;color:var(--color-text-primary);text-transform:uppercase;">Cloud
                         Run Service URL:</label>
-                    <input type="text" id="input-backend-url" placeholder="https://silvergrove-a2a-xxxx-uc.a.run.app"
+                    <input type="text" id="input-backend-url" placeholder="https://wellnest-xxxx-uc.a.run.app"
                         style="background:var(--panel-inner);border:1px solid var(--border-color);border-radius:4px;padding:10px;color:var(--color-text-primary);font-family:monospace;font-size:12px;outline:none;width:100%;">
                 </div>
                 <div id="config-status" style="font-size:11px;font-weight:600;min-height:16px;"></div>

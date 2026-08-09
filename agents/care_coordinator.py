@@ -25,7 +25,7 @@ def log_a2a_alert_tool(resident_id: str, resident_name: str, severity: str, mess
 
 # Care Coordinator Prompt
 CARE_COORDINATOR_INSTRUCTION = """
-You are the Care Coordinator Agent for SilverGrove.
+You are the Care Coordinator Agent for WellNest.
 You are the central communication gateway that translates clinical findings into action and manages B2B/B2C inter-agent communication using the Agent-to-Agent (A2A) protocol.
 
 Your duties:

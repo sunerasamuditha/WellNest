@@ -19,7 +19,7 @@ __pycache__/
 *.pem
 credentials.json
 client_secret*.json
-silvergrove-a2a-*.json
+wellnest-a2a-key.json
 *.json.key
 gcp-key.json
 

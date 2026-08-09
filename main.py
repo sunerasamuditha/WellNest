@@ -15,7 +15,7 @@ from typing import List, Optional
 # Ensure parent directory is in path for easy importing
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from agent import SilverGroveOrchestrator
+from agent import WellNestOrchestrator
 from tools.vitals_tools import get_resident_vitals, get_resident_details
 from tools.alert_tools import get_alerts_timeline, clear_alerts_timeline
 from tools.trace_events import TraceCollector
@@ -27,7 +27,7 @@ from agent import session_service, invoke_agent
 
 # Initialize FastAPI App
 app = FastAPI(
-    title="SilverGrove AAL Portal",
+    title="WellNest AAL Portal",
     description="Privacy-First Ambient Assisted Living Multi-Agent System Dashboard Gateway",
     version="1.0.0"
 )
@@ -42,7 +42,7 @@ app.add_middleware(
 )
 
 # Initialize Orchestrator instance
-orchestrator = SilverGroveOrchestrator()
+orchestrator = WellNestOrchestrator()
 
 # Endpoint: List all resident profiles
 @app.get("/api/residents")
@@ -210,7 +210,7 @@ def clear_alerts():
 class ReportRequest(BaseModel):
     resident_id: str
 
-analyst_runner = Runner(agent=clinical_analyst_agent, app_name="silvergrove", session_service=session_service, auto_create_session=True)
+analyst_runner = Runner(agent=clinical_analyst_agent, app_name="wellnest", session_service=session_service, auto_create_session=True)
 
 @app.post("/api/reports/generate")
 def generate_report(req: ReportRequest):
