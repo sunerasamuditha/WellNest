@@ -20,10 +20,18 @@ PROJECT_ID = os.environ.get("PROJECT_ID", "wellnest-a2a")
 # Attempt to initialize Firestore Client
 try:
     from google.cloud import firestore
-    # Auto-resolves credentials via Application Default Credentials (ADC) or environmental files
-    firestore_client = firestore.Client(project=PROJECT_ID, database="wellnest-firestore")
+    db_name = os.environ.get("FIRESTORE_DATABASE", "wellnest-firestore")
+    try:
+        firestore_client = firestore.Client(project=PROJECT_ID, database=db_name)
+        # Test connection by listing collections (lightweight check)
+        list(firestore_client.collections(page_size=1))
+        logger.info(f"[GCP Config] Cloud Firestore client initialized for database: {db_name}")
+    except Exception as e1:
+        logger.info(f"[GCP Config] Named database '{db_name}' unavailable ({e1}). Falling back to default Firestore database...")
+        firestore_client = firestore.Client(project=PROJECT_ID)
+        logger.info(f"[GCP Config] Cloud Firestore client initialized for default database.")
+        
     FIRESTORE_ACTIVE = True
-    logger.info(f"[GCP Config] Cloud Firestore client initialized successfully for project: {PROJECT_ID}")
 except Exception as e:
     logger.warning(f"[GCP Config] Could not initialize Cloud Firestore client: {e}. Defaulting to local JSON storage.")
 

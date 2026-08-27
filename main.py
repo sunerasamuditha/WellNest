@@ -233,11 +233,16 @@ def broadcast_stream(resident_id: str):
             
             # Watch the collection for this resident
             try:
-                # We order by _ts to ensure events come in order
+                # Try ordered query first
                 query = firestore_client.collection(f"live_traces_{resident_id}").order_by('_ts')
                 watch = query.on_snapshot(on_snapshot)
             except Exception as e:
-                print(f"Failed to start Firestore watch: {e}")
+                logger.warning(f"Firestore ordered watch failed ({e}). Trying unordered collection watch...")
+                try:
+                    query = firestore_client.collection(f"live_traces_{resident_id}")
+                    watch = query.on_snapshot(on_snapshot)
+                except Exception as e2:
+                    logger.error(f"Firestore unordered watch failed: {e2}")
         else:
             # Fallback to local memory if Firestore isn't configured
             if resident_id not in broadcast_listeners:
