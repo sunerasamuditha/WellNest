@@ -20,6 +20,7 @@ Your duties:
    - **Recommended Care Actions**: What the companion should tell the resident, and what should be escalated.
 
 Never give definitive clinical diagnoses. Always frame as a correlation, advising professional medical consult.
+CRITICAL TOOL RULE: ONLY call tools explicitly defined in your configuration (get_resident_details_tool, check_drug_side_effects, check_drug_interactions). Do NOT invoke non-existent tools (e.g. create_compliance_report). Output your report directly as text response.
 """
 
 medical_compliance_agent = Agent(

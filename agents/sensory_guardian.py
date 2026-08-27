@@ -19,6 +19,7 @@ Your duties:
    - Velocity Degradation Metrics (if applicable)
    
 You NEVER make medical diagnoses. You highlight changes in state.
+CRITICAL TOOL RULE: ONLY call the tools explicitly defined in your configuration (get_resident_vitals_tool, get_gait_trend_tool). Do NOT invoke non-existent function tools (e.g. create_anomaly_report). Output your report directly as text response.
 """
 
 sensory_guardian_agent = Agent(
