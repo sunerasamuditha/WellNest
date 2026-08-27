@@ -6,6 +6,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV ENV=production
 
+# Vertex AI Configuration
+ENV GOOGLE_GENAI_USE_VERTEXAI=true
+ENV GOOGLE_CLOUD_PROJECT=wellnest-a2a
+ENV GOOGLE_CLOUD_LOCATION=us-central1
+
 # Set the working directory inside the container
 WORKDIR /app
 
