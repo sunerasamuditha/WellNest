@@ -167,6 +167,41 @@ def clear_alerts_db():
     except Exception as e:
         logger.error(f"[Local Storage Error] Failed to clear alerts: {e}")
 
+# --- Real-time Trace Operations (Pub/Sub via Firestore) ---
+
+def save_trace_event_db(resident_id: str, event: Dict[str, Any]):
+    """
+    Saves a live agent trace event to Firestore so that all subscribed clients 
+    across all Cloud Run instances receive it in real-time.
+    """
+    if FIRESTORE_ACTIVE:
+        try:
+            firestore_client.collection(f"live_traces_{resident_id}").add(event)
+        except Exception as e:
+            logger.error(f"[Firestore Error] Failed to save trace event: {e}")
+
+def clear_trace_events_db(resident_id: str):
+    """
+    Clears the trace collection for a new health check run.
+    """
+    if FIRESTORE_ACTIVE:
+        try:
+            batch = firestore_client.batch()
+            docs = firestore_client.collection(f"live_traces_{resident_id}").stream()
+            count = 0
+            for doc in docs:
+                batch.delete(doc.reference)
+                count += 1
+                if count >= 500: # Firestore max batch size
+                    batch.commit()
+                    batch = firestore_client.batch()
+                    count = 0
+            if count > 0:
+                batch.commit()
+        except Exception as e:
+            logger.error(f"[Firestore Error] Failed to clear trace events: {e}")
+
+
 
 # --- Pub/Sub Messaging Operations ---
 

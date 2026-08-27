@@ -25,6 +25,7 @@ from agent import WellNestOrchestrator
 from tools.vitals_tools import get_resident_vitals, get_resident_details
 from tools.alert_tools import get_alerts_timeline, clear_alerts_timeline
 from tools.trace_events import TraceCollector
+from services.gcp_service import save_trace_event_db, clear_trace_events_db, FIRESTORE_ACTIVE, firestore_client
 from a2a.agent_cards import get_root_agent_card, get_all_agent_cards
 from mcp_servers.vitals_server import set_vitals_frozen
 from agents.clinical_analyst import clinical_analyst_agent
@@ -160,87 +161,125 @@ def stream_agent_check(resident_id: str):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-# ─── BROADCAST TRIGGER: fires agents and pushes events to ALL connected SSE clients ─
+# ─── BROADCAST TRIGGER: fires agents, pushes events to Firestore, and holds connection ─
 @app.post("/api/residents/{resident_id}/check/trigger")
 def trigger_broadcast_check(resident_id: str):
     """
     Trigger a health check that broadcasts live events to ALL clients subscribed
-    to /check/broadcast (desktop dashboard, family app, EHR, mobile remote, etc.).
-    Returns immediately; agents run in background thread.
+    to /check/broadcast (via Firestore).
+    We use a StreamingResponse here to hold the HTTP connection open, which prevents 
+    Cloud Run from throttling the CPU while the background agents run.
     """
     if check_running.get(resident_id):
         return {"status": "already_running", "message": "A health check is already in progress for this resident."}
 
-    def run_and_broadcast():
-        check_running[resident_id] = True
+    check_running[resident_id] = True
+    # Clear old traces for this run
+    clear_trace_events_db(resident_id)
+
+    async def event_generator():
         session_id = f"broadcast_{uuid.uuid4().hex[:8]}"
         collector = TraceCollector(session_id=session_id)
-        loop = None
-
-        # Capture the event loop at call time for thread-safe queue pushes
+        queue = asyncio.Queue()
+        
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
         except RuntimeError:
-            loop = None
+            loop = asyncio.get_event_loop()
 
-        def push_to_all(event):
-            """Push a trace event to every connected SSE client for this resident."""
-            listeners = broadcast_listeners.get(resident_id, [])
-            for q in list(listeners):
-                try:
-                    q.put_nowait(event)
-                except Exception:
-                    pass
+        def listener(event):
+            # Save to Firestore for cross-instance /broadcast clients
+            if FIRESTORE_ACTIVE:
+                # add timestamp for proper ordering in on_snapshot
+                event['_ts'] = datetime.datetime.utcnow().isoformat()
+                save_trace_event_db(resident_id, event)
+            # Push to local queue for the trigger caller (keeps their connection alive)
+            loop.call_soon_threadsafe(queue.put_nowait, event)
 
-        collector.add_listener(push_to_all)
+        collector.add_listener(listener)
 
-        try:
-            set_vitals_frozen(resident_id, True)
-            orchestrator.run_health_check(resident_id, collector)
-        except Exception as e:
-            push_to_all({"agent": "ORCHESTRATOR", "event_type": "ERROR",
-                         "message": f"Check failed: {str(e)}",
-                         "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")})
-        finally:
-            set_vitals_frozen(resident_id, False)
-            check_running[resident_id] = False
-            # Signal completion sentinel to all listeners
-            for q in list(broadcast_listeners.get(resident_id, [])):
-                try:
-                    q.put_nowait("__DONE__")
-                except Exception:
-                    pass
+        def run_check():
+            try:
+                set_vitals_frozen(resident_id, True)
+                orchestrator.run_health_check(resident_id, collector)
+            except Exception as e:
+                err_event = {"agent": "ORCHESTRATOR", "event_type": "ERROR",
+                             "message": f"Check failed: {str(e)}",
+                             "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")}
+                listener(err_event)
+            finally:
+                set_vitals_frozen(resident_id, False)
+                check_running[resident_id] = False
+                # Sentinel to end the stream
+                done_event = {"agent": "ORCHESTRATOR", "event_type": "COMPLETE", "message": "Done."}
+                listener(done_event)
+                loop.call_soon_threadsafe(queue.put_nowait, "DONE")
 
-    thread = threading.Thread(target=run_and_broadcast, daemon=True)
-    thread.start()
+        thread = threading.Thread(target=run_check, daemon=True)
+        thread.start()
 
-    return {
-        "status": "triggered",
-        "resident_id": resident_id,
-        "message": "Health check started. All connected dashboards will receive live events."
-    }
+        yield f"data: {json.dumps({'status': 'triggered'})}\n\n"
+
+        while True:
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=25.0)
+                if event == "DONE":
+                    break
+                yield f"data: {json.dumps(event)}\n\n"
+            except asyncio.TimeoutError:
+                yield ": keepalive\n\n"
+
+    return StreamingResponse(
+        event_generator(), 
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )
 
 
-# ─── BROADCAST STREAM: subscribe to live events from any trigger source ───────
+# ─── BROADCAST STREAM: subscribe to live events from Firestore ─────────
 @app.get("/api/residents/{resident_id}/check/broadcast")
 def broadcast_stream(resident_id: str):
     """
-    Persistent SSE endpoint. Any client (desktop dashboard, mobile remote app)
-    can subscribe here and will instantly receive live agent events whenever
-    a /trigger is called from ANY device.
+    Persistent SSE endpoint. Desktop dashboard connects here.
+    Listens to Firestore `live_traces` in real-time, bridging events across all Cloud Run instances.
     """
     async def event_gen():
         queue: asyncio.Queue = asyncio.Queue()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
 
-        if resident_id not in broadcast_listeners:
-            broadcast_listeners[resident_id] = []
-        broadcast_listeners[resident_id].append(queue)
+        watch = None
 
-        # Send initial handshake so the client knows it's connected
+        if FIRESTORE_ACTIVE:
+            def on_snapshot(col_snapshot, changes, read_time):
+                # Only push added events (ignore modifications/deletions)
+                for change in changes:
+                    if change.type.name == 'ADDED':
+                        event = change.document.to_dict()
+                        if '_ts' in event:
+                            del event['_ts']
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
+            
+            # Watch the collection for this resident
+            try:
+                # We order by _ts to ensure events come in order
+                query = firestore_client.collection(f"live_traces_{resident_id}").order_by('_ts')
+                watch = query.on_snapshot(on_snapshot)
+            except Exception as e:
+                print(f"Failed to start Firestore watch: {e}")
+        else:
+            # Fallback to local memory if Firestore isn't configured
+            if resident_id not in broadcast_listeners:
+                broadcast_listeners[resident_id] = []
+            broadcast_listeners[resident_id].append(queue)
+
+        # Send initial handshake
         connected_event = {
             "agent": "SYSTEM",
             "event_type": "BROADCAST_CONNECTED",
-            "message": f"Broadcast channel open for {resident_id}. Waiting for health check trigger...",
+            "message": f"Broadcast channel open (Firestore Sync active). Waiting for trigger...",
             "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")
         }
         yield f"data: {json.dumps(connected_event)}\n\n"
@@ -248,36 +287,26 @@ def broadcast_stream(resident_id: str):
         try:
             while True:
                 try:
-                    # Wait up to 25s; send heartbeat comment if idle (keeps connection alive)
                     event = await asyncio.wait_for(queue.get(), timeout=25.0)
-                    if event == "__DONE__":
-                        done_event = {
-                            "agent": "ORCHESTRATOR",
-                            "event_type": "COMPLETE",
-                            "message": "Health check complete. Alerts saved to Firestore.",
-                            "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")
-                        }
-                        yield f"data: {json.dumps(done_event)}\n\n"
-                        # Stay connected — next trigger will send more events
-                    else:
-                        yield f"data: {json.dumps(event)}\n\n"
+                    yield f"data: {json.dumps(event)}\n\n"
+                    if event.get("event_type") == "COMPLETE":
+                        # Stay connected for the next run
+                        pass
                 except asyncio.TimeoutError:
-                    # SSE keepalive comment (invisible to client, prevents proxy timeouts)
                     yield ": keepalive\n\n"
         finally:
-            # Unregister this client's queue when it disconnects
-            try:
-                broadcast_listeners[resident_id].remove(queue)
-            except (ValueError, KeyError):
-                pass
+            if watch:
+                watch.unsubscribe()
+            if not FIRESTORE_ACTIVE:
+                try:
+                    broadcast_listeners[resident_id].remove(queue)
+                except (ValueError, KeyError):
+                    pass
 
     return StreamingResponse(
         event_gen(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no"  # Disable nginx buffering for real-time delivery
-        }
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
 
 # A2A Protocol Discovery Endpoints
