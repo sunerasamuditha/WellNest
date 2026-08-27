@@ -3,11 +3,12 @@
 // No fake delays. Every visual update comes from actual backend execution.
 
 let activeResidentId = null;
-let sseSource = null;
+let sseSource = null;       // broadcast SSE (persistent, receives events from any trigger)
 let currentFilter = 'all';
 let allLoggedEvents = [];
 let vitalsPollingInterval = null;
 let isHealthCheckRunning = false;
+let broadcastReconnectTimer = null;
 
 // Accumulated trajectory data from SSE events
 let liveTrajectory = {
@@ -179,6 +180,11 @@ async function selectResident(residentId) {
 
     resetAgentWorkspace();
 
+    // Open the persistent broadcast channel for this resident.
+    // Any /trigger call from ANY device (mobile, API, desktop) will now
+    // stream events directly into this dashboard in real-time.
+    subscribeToBroadcast(residentId);
+
     try {
         const res = await fetch(getApiBaseUrl() + `/api/residents/${residentId}`);
         const data = await res.json();
@@ -295,72 +301,115 @@ function setAgentOutput(agentKey, html) {
 // SSE-DRIVEN HEALTH CHECK (THE CORE UNIFICATION)
 // ============================================================
 
+// Called when local "Run" button is pressed OR from any other source
 function triggerAgentCheck() {
-    if (!activeResidentId) return;
+    if (!activeResidentId || isHealthCheckRunning) return;
 
     const btn = document.getElementById("trigger-check-btn");
     btn.disabled = true;
-    btn.innerText = "Agents Running...";
+    btn.innerText = "Triggering...";
 
-    isHealthCheckRunning = true;
-    stopVitalsPolling();
+    // POST to /trigger — agents start on GCP, broadcast SSE will deliver events
+    fetch(getApiBaseUrl() + `/api/residents/${activeResidentId}/check/trigger`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'already_running') {
+                btn.innerText = "Already Running...";
+                return;
+            }
+            // The broadcast SSE (already open) will now receive events automatically
+            btn.innerText = "Agents Running...";
+        })
+        .catch(err => {
+            console.error('Trigger failed:', err);
+            btn.disabled = false;
+            btn.innerText = "Run Multi-Agent Health Check";
+        });
+}
 
-    // Reset everything
-    resetAgentWorkspace();
-    clearTerminalLogs();
-    allLoggedEvents = [];
+// Open (or reopen) the persistent broadcast SSE channel for the active resident.
+// This is called whenever a new resident is selected.
+// ALL events from ANY trigger source (mobile, desktop, API) arrive here.
+function subscribeToBroadcast(residentId) {
+    // Close existing connection
+    if (sseSource) {
+        sseSource.close();
+        sseSource = null;
+    }
+    if (broadcastReconnectTimer) {
+        clearTimeout(broadcastReconnectTimer);
+    }
 
-    // Switch to terminal tab to show live activity
-    document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.terminal-tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('[data-tab="terminal"]').classList.add('active');
-    document.getElementById('tab-terminal').classList.add('active');
-
-    // Update terminal status
-    document.getElementById('terminal-status').textContent = `wellnest://running/${activeResidentId}`;
-
-    // Set initial agent state
-    setAgentStatus("sensory", "Analyzing Vitals", "status-running");
-
-    // Open SSE stream -- THIS IS THE SINGLE SOURCE OF TRUTH
     const baseUrl = getApiBaseUrl();
-    const sseUrl = `${baseUrl}/api/residents/${activeResidentId}/check/stream`;
-
-    if (sseSource) sseSource.close();
-    sseSource = new EventSource(sseUrl);
+    const url = `${baseUrl}/api/residents/${residentId}/check/broadcast`;
+    sseSource = new EventSource(url);
 
     sseSource.onmessage = (event) => {
         try {
             const evt = JSON.parse(event.data);
-            allLoggedEvents.push(evt);
 
-            // Always append to terminal log
+            // Handshake — connection confirmed, reset UI to ready state
+            if (evt.event_type === 'BROADCAST_CONNECTED') {
+                isHealthCheckRunning = false;
+                const btn = document.getElementById("trigger-check-btn");
+                if (btn) { btn.disabled = false; btn.innerText = "Run Multi-Agent Health Check"; }
+                document.getElementById('terminal-status').textContent = `wellnest://broadcast/${residentId}`;
+                appendLogRow(evt);
+                return;
+            }
+
+            // First real agent event — mark check as running
+            if (!isHealthCheckRunning && evt.event_type !== 'COMPLETE') {
+                isHealthCheckRunning = true;
+                stopVitalsPolling();
+                resetAgentWorkspace();
+                clearTerminalLogs();
+                allLoggedEvents = [];
+
+                // Switch to terminal tab
+                document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.terminal-tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('[data-tab="terminal"]').classList.add('active');
+                document.getElementById('tab-terminal').classList.add('active');
+                document.getElementById('terminal-status').textContent = `wellnest://running/${residentId}`;
+
+                // Show running in button
+                const btn = document.getElementById("trigger-check-btn");
+                if (btn) { btn.disabled = true; btn.innerText = "Agents Running..."; }
+
+                setAgentStatus("sensory", "Analyzing Vitals", "status-running");
+            }
+
+            allLoggedEvents.push(evt);
             if (currentFilter === 'all' || evt.agent === currentFilter) {
                 appendLogRow(evt);
             }
-
-            // Drive agent card updates from real events
             processAgentEvent(evt);
+
+            // COMPLETE sentinel
+            if (evt.event_type === 'COMPLETE') {
+                isHealthCheckRunning = false;
+                startVitalsPolling();
+                initAlerts();
+                triggerModalAlert();
+                document.getElementById('terminal-status').textContent = `wellnest://complete/${residentId}`;
+                const btn = document.getElementById("trigger-check-btn");
+                if (btn) { btn.disabled = false; btn.innerText = "Run Multi-Agent Health Check"; }
+            }
         } catch (e) {
-            console.error("SSE parse error:", e);
+            console.error("Broadcast SSE parse error:", e);
         }
     };
 
     sseSource.onerror = () => {
+        // Auto-reconnect after 4 seconds
         sseSource.close();
         sseSource = null;
-        btn.disabled = false;
-        btn.innerText = "Run Multi-Agent Health Check";
-        document.getElementById('terminal-status').textContent = 'wellnest://complete';
-
-        isHealthCheckRunning = false;
-        startVitalsPolling();
-
-        // Refresh alerts after completion
-        initAlerts();
-
-        // Show consensus modal if we have trajectory data
-        triggerModalAlert();
+        broadcastReconnectTimer = setTimeout(() => {
+            if (activeResidentId === residentId) {
+                subscribeToBroadcast(residentId);
+            }
+        }, 4000);
     };
 }
 

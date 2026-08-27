@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WellNest | Family Connect</title>
+    <meta name="description" content="WellNest Family App — real-time AI-powered health alerts from the care facility.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --api: 'https://wellnest-a2a-28869653773.us-central1.run.app';
+            --teal: #0d9488;
+            --teal-lt: #14b8a6;
+            --bg: #f0fdf9;
+            --surface: #ffffff;
+            --border: #d1fae5;
+            --text: #0f172a;
+            --muted: #64748b;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --shadow: 0 2px 16px rgba(13,148,136,.10);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+
+        /* ── HEADER ── */
+        .hdr {
+            background: var(--teal);
+            color: white;
+            padding: 14px 16px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+            box-shadow: 0 2px 12px rgba(13,148,136,.3);
+        }
+        .hdr-brand { display: flex; align-items: center; gap: 10px; }
+        .hdr-icon { width: 36px; height: 36px; background: rgba(255,255,255,.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .hdr-title { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 700; }
+        .hdr-sub { font-size: 0.65rem; opacity: .75; }
+        .conn-pill {
+            display: flex; align-items: center; gap: 5px;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.3);
+            border-radius: 20px; padding: 5px 11px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+        .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.4); }
+        .conn-dot.live { background: #34d399; animation: blink 2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* ── RESIDENT STRIP ── */
+        .res-strip { background: var(--teal); padding: 0 16px 14px; display: flex; gap: 8px; overflow-x: auto; }
+        .res-chip {
+            flex-shrink: 0;
+            padding: 7px 16px; border-radius: 20px;
+            border: 2px solid rgba(255,255,255,.35);
+            background: rgba(255,255,255,.15);
+            color: white; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all .2s; white-space: nowrap;
+        }
+        .res-chip.active { background: white; color: var(--teal); border-color: white; }
+
+        /* ── SCROLL BODY ── */
+        .body { flex: 1; overflow-y: auto; padding: 14px 14px 84px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* ── STATUS BANNER ── */
+        .status-banner {
+            border-radius: 14px; padding: 14px 16px;
+            display: flex; align-items: center; gap: 12px;
+            border: 1px solid;
+        }
+        .status-banner.safe { background: #d1fae5; border-color: #a7f3d0; }
+        .status-banner.advisory { background: #dbeafe; border-color: #bfdbfe; }
+        .status-banner.warning { background: #fef3c7; border-color: #fde68a; }
+        .status-banner.critical { background: #fee2e2; border-color: #fecaca; }
+        .status-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .safe .status-icon { background: #a7f3d0; }
+        .advisory .status-icon { background: #bfdbfe; }
+        .warning .status-icon { background: #fde68a; }
+        .critical .status-icon { background: #fecaca; }
+        .status-text h3 { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+        .status-text p { font-size: 0.95rem; font-weight: 700; }
+        .safe .status-text p { color: #065f46; }
+        .advisory .status-text p { color: #1e40af; }
+        .warning .status-text p { color: #92400e; }
+        .critical .status-text p { color: #991b1b; }
+
+        /* ── VITALS GRID ── */
+        .vitals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        @media(min-width:440px) { .vitals-grid { grid-template-columns: repeat(4,1fr); } }
+        .vcard { background: var(--surface); border-radius: 12px; padding: 12px 8px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .vcard.flag { border-color: #fecaca; background: #fff5f5; }
+        .ve { font-size: 1.3rem; }
+        .vv { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--teal); }
+        .vcard.flag .vv { color: var(--red); }
+        .vu { font-size: 0.62rem; color: var(--muted); }
+        .vl { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+
+        /* ── SECTION LABEL ── */
+        .sec-label { display: flex; align-items: center; justify-content: space-between; }
+        .sec-label h3 { font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; }
+        .badge { background: var(--red); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+
+        /* ── ALERT CARDS ── */
+        .alert-card { background: var(--surface); border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 4px solid var(--amber); box-shadow: var(--shadow); animation: rise .35s ease; }
+        @keyframes rise { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .alert-card.CRITICAL { border-left-color: var(--red); background: #fff5f5; }
+        .alert-card.WARNING  { border-left-color: var(--amber); background: #fffbeb; }
+        .alert-card.ADVISORY { border-left-color: var(--blue); background: #eff6ff; }
+        .alert-card.INFO     { border-left-color: var(--green); background: #f0fdf4; }
+        .atop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+        .asev { font-size: 0.65rem; font-weight: 700; padding: 2px 9px; border-radius: 10px; }
+        .CRITICAL .asev { background: #fee2e2; color: var(--red); }
+        .WARNING  .asev { background: #fef3c7; color: #92400e; }
+        .ADVISORY .asev { background: #dbeafe; color: #1e40af; }
+        .INFO     .asev { background: #d1fae5; color: #065f46; }
+        .atime { font-size: 0.68rem; color: var(--muted); }
+        .amsg { font-size: 0.88rem; line-height: 1.55; color: var(--text); margin-bottom: 8px; }
+        .atags { display: flex; flex-wrap: wrap; gap: 5px; }
+        .atag { font-size: 0.68rem; padding: 3px 8px; border-radius: 10px; background: #f1f5f9; color: var(--muted); font-weight: 500; border: 1px solid #e2e8f0; }
+
+        /* ── EMPTY ── */
+        .empty { text-align: center; padding: 32px 16px; background: var(--surface); border-radius: 14px; border: 2px dashed var(--border); color: var(--muted); }
+        .empty .eico { font-size: 2.2rem; margin-bottom: 10px; }
+
+        /* ── EMERGENCY ── */
+        .emg-btns { display: flex; flex-direction: column; gap: 9px; }
+        .emg-btns h3 { font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; }
+        .emg-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 15px; border-radius: 12px; border: none;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: all .2s; width: 100%;
+        }
+        .emg-btn:active { transform: scale(.97); }
+        .btn-call { background: linear-gradient(135deg,#0ea5e9,#0284c7); color: white; }
+        .btn-911  { background: linear-gradient(135deg,#ef4444,#dc2626); color: white; }
+
+        /* ── BOTTOM NAV ── */
+        .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e2e8f0; display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 16px rgba(0,0,0,.07); }
+        .ni { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px 12px; gap: 4px; font-size: 0.62rem; font-weight: 600; color: var(--muted); text-decoration: none; border: none; background: none; cursor: pointer; transition: color .15s; }
+        .ni.on, .ni:hover { color: var(--teal); }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+    <div class="hdr-brand">
+        <div class="hdr-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </div>
+        <div>
+            <div class="hdr-title">WellNest Family</div>
+            <div class="hdr-sub">Live from GCP Cloud Run</div>
+        </div>
+    </div>
+    <div class="conn-pill">
+        <div class="conn-dot" id="cdot"></div>
+        <span id="ctext">Connecting...</span>
+    </div>
+</header>
+
+<!-- RESIDENT STRIP -->
+<div class="res-strip" id="res-strip">
+    <div class="res-chip active" data-id="sriyani_001">Loading...</div>
+</div>
+
+<!-- SCROLLABLE BODY -->
+<div class="body" id="body-content">
+    <div class="empty"><div class="eico">⏳</div><p>Loading resident data...</p></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+    <a href="family-app.html" class="ni on">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Alerts
+    </a>
+    <a href="health-check.html" class="ni">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Health Check
+    </a>
+    <a href="ehr-gateway.html" class="ni">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h3M15 15h3"/></svg>
+        EHR
+    </a>
+</nav>
+
+<script>
+/* ── CONFIG ── */
+const GCP = 'https://wellnest-a2a-28869653773.us-central1.run.app';
+let activeResident = 'sriyani_001';
+let residents = [];
+let profile = null;
+let vitels = null;
+let alerts = [];
+
+/* ── CONNECTION CHECK ── */
+async function checkConn() {
+    const dot = document.getElementById('cdot');
+    const txt = document.getElementById('ctext');
+    try {
+        const r = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(5000) });
+        if (r.ok) { dot.classList.add('live'); txt.textContent = 'Live'; }
+        else throw 0;
+    } catch { dot.classList.remove('live'); txt.textContent = 'Offline'; }
+}
+
+/* ── LOAD RESIDENTS ── */
+async function loadResidents() {
+    try {
+        const r = await fetch(`${GCP}/api/residents`);
+        residents = await r.json();
+        const strip = document.getElementById('res-strip');
+        strip.innerHTML = '';
+        residents.forEach((res, i) => {
+            const chip = document.createElement('div');
+            chip.className = 'res-chip' + (res.id === activeResident ? ' active' : '');
+            chip.dataset.id = res.id;
+            chip.textContent = res.name.split(' ')[0];
+            chip.onclick = () => {
+                document.querySelectorAll('.res-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                activeResident = res.id;
+                loadAll();
+            };
+            strip.appendChild(chip);
+        });
+    } catch(e) {}
+}
+
+/* ── LOAD ALL DATA ── */
+async function loadAll() {
+    try {
+        const [pd, al] = await Promise.all([
+            fetch(`${GCP}/api/residents/${activeResident}`).then(r => r.json()),
+            fetch(`${GCP}/api/alerts`).then(r => r.json())
+        ]);
+        profile = pd.profile;
+        vitels = pd.vitals?.telemetry || {};
+        /* Filter alerts for this resident, sorted newest first */
+        alerts = (al || [])
+            .filter(a => a.resident_id === activeResident)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        render();
+    } catch(e) {
+        document.getElementById('body-content').innerHTML = `<div class="empty"><div class="eico">⚠️</div><p>Unable to reach the GCP backend. Check your internet connection.</p></div>`;
+    }
+}
+
+/* ── RENDER ── */
+function render() {
+    const top = alerts[0];
+    const sev = top?.severity || 'SAFE';
+
+    const sevMap = {
+        CRITICAL: { cls:'critical', icon:'🔴', text:'CRITICAL — Immediate attention required' },
+        WARNING:  { cls:'warning',  icon:'🟡', text:'Warning — Monitor the resident closely' },
+        ADVISORY: { cls:'advisory', icon:'🔵', text:'Advisory — Follow care instructions' },
+        INFO:     { cls:'safe',     icon:'🟢', text:'All readings normal — Resident is safe' },
+        SAFE:     { cls:'safe',     icon:'🟢', text:'No active alerts — Resident is safe' },
+    };
+    const s = sevMap[sev] || sevMap.SAFE;
+
+    /* Anomaly flags */
+    const bpFlag = (vitels.bp_systolic >= 140) || (vitels.bp_diastolic >= 90);
+    const baseline = profile?.baseline_vitals?.gait_speed_ms || 0.85;
+    const gaitFlag = baseline > 0 && ((baseline - (vitels.gait_speed_ms || baseline)) / baseline) >= 0.15;
+
+    /* Alerts HTML */
+    const alertsHTML = alerts.length === 0
+        ? `<div class="empty"><div class="eico">✅</div><p>No active alerts.<br>Your loved one is doing well.</p></div>`
+        : alerts.map(a => {
+            const acts = Array.isArray(a.actions) ? a.actions : [];
+            return `<div class="alert-card ${a.severity}">
+                <div class="atop">
+                    <span class="asev">${a.severity}</span>
+                    <span class="atime">${new Date(a.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="amsg">${a.message || ''}</div>
+                ${acts.length ? `<div class="atags">${acts.map(t => `<span class="atag">${t.trim()}</span>`).join('')}</div>` : ''}
+            </div>`;
+        }).join('');
+
+    document.getElementById('body-content').innerHTML = `
+        <!-- STATUS -->
+        <div class="status-banner ${s.cls}">
+            <div class="status-icon"><span style="font-size:1.4rem">${s.icon}</span></div>
+            <div class="status-text">
+                <h3>${profile?.name || 'Resident'}</h3>
+                <p>${s.text}</p>
+            </div>
+        </div>
+
+        <!-- VITALS -->
+        <div class="vitals-grid">
+            <div class="vcard"><div class="ve">❤️</div><div class="vv">${vitels.heart_rate_bpm || '--'}</div><div class="vu">bpm</div><div class="vl">Heart Rate</div></div>
+            <div class="vcard ${bpFlag ? 'flag' : ''}"><div class="ve">🩺</div><div class="vv">${vitels.bp_systolic || '--'}/${vitels.bp_diastolic || '--'}</div><div class="vu">mmHg</div><div class="vl">Blood Pressure</div></div>
+            <div class="vcard ${gaitFlag ? 'flag' : ''}"><div class="ve">🚶</div><div class="vv">${vitels.gait_speed_ms || '--'}</div><div class="vu">m/s</div><div class="vl">Gait Speed</div></div>
+            <div class="vcard"><div class="ve">🌙</div><div class="vv">${vitels.sleep_duration_hrs || '--'}</div><div class="vu">hrs</div><div class="vl">Sleep</div></div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="sec-label">
+            <h3>Clinical Alerts</h3>
+            ${alerts.length ? `<span class="badge">${alerts.length}</span>` : ''}
+        </div>
+        ${alertsHTML}
+
+        <!-- EMERGENCY -->
+        <div class="emg-btns">
+            <h3>Emergency Actions</h3>
+            <button class="emg-btn btn-call" onclick="window.location='tel:+15550001'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                Call Care Facility
+            </button>
+            <button class="emg-btn btn-911" onclick="window.location='tel:911'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Dial 911 Emergency
+            </button>
+        </div>
+    `;
+}
+
+/* ── INIT ── */
+checkConn();
+loadResidents();
+loadAll();
+/* Poll Firestore-backed /api/alerts every 6 seconds */
+setInterval(loadAll, 6000);
+setInterval(checkConn, 12000);
+</script>
+</body>
+</html>

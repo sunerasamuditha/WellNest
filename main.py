@@ -10,7 +10,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
+
+# ─── BROADCAST PUB/SUB STATE ───────────────────────────────────────────────
+# Maps resident_id -> list of asyncio.Queue instances (one per connected SSE client)
+# When any client fires /trigger, ALL queues receive the event stream in real-time.
+broadcast_listeners: Dict[str, List] = {}
+check_running: Dict[str, bool] = {}
 
 # Ensure parent directory is in path for easy importing
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -115,7 +121,7 @@ def trigger_agent_check(resident_id: str):
         set_vitals_frozen(resident_id, False)
         raise HTTPException(status_code=500, detail=str(e))
 
-# Endpoint: Stream End-to-End Multi-Agent Health Check in Real-time
+# Endpoint: Stream End-to-End Multi-Agent Health Check in Real-time (single-client)
 @app.get("/api/residents/{resident_id}/check/stream")
 def stream_agent_check(resident_id: str):
     """
@@ -152,6 +158,127 @@ def stream_agent_check(resident_id: str):
             yield f"data: {json.dumps(event)}\n\n"
             
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# ─── BROADCAST TRIGGER: fires agents and pushes events to ALL connected SSE clients ─
+@app.post("/api/residents/{resident_id}/check/trigger")
+def trigger_broadcast_check(resident_id: str):
+    """
+    Trigger a health check that broadcasts live events to ALL clients subscribed
+    to /check/broadcast (desktop dashboard, family app, EHR, mobile remote, etc.).
+    Returns immediately; agents run in background thread.
+    """
+    if check_running.get(resident_id):
+        return {"status": "already_running", "message": "A health check is already in progress for this resident."}
+
+    def run_and_broadcast():
+        check_running[resident_id] = True
+        session_id = f"broadcast_{uuid.uuid4().hex[:8]}"
+        collector = TraceCollector(session_id=session_id)
+        loop = None
+
+        # Capture the event loop at call time for thread-safe queue pushes
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = None
+
+        def push_to_all(event):
+            """Push a trace event to every connected SSE client for this resident."""
+            listeners = broadcast_listeners.get(resident_id, [])
+            for q in list(listeners):
+                try:
+                    q.put_nowait(event)
+                except Exception:
+                    pass
+
+        collector.add_listener(push_to_all)
+
+        try:
+            set_vitals_frozen(resident_id, True)
+            orchestrator.run_health_check(resident_id, collector)
+        except Exception as e:
+            push_to_all({"agent": "ORCHESTRATOR", "event_type": "ERROR",
+                         "message": f"Check failed: {str(e)}",
+                         "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")})
+        finally:
+            set_vitals_frozen(resident_id, False)
+            check_running[resident_id] = False
+            # Signal completion sentinel to all listeners
+            for q in list(broadcast_listeners.get(resident_id, [])):
+                try:
+                    q.put_nowait("__DONE__")
+                except Exception:
+                    pass
+
+    thread = threading.Thread(target=run_and_broadcast, daemon=True)
+    thread.start()
+
+    return {
+        "status": "triggered",
+        "resident_id": resident_id,
+        "message": "Health check started. All connected dashboards will receive live events."
+    }
+
+
+# ─── BROADCAST STREAM: subscribe to live events from any trigger source ───────
+@app.get("/api/residents/{resident_id}/check/broadcast")
+def broadcast_stream(resident_id: str):
+    """
+    Persistent SSE endpoint. Any client (desktop dashboard, mobile remote app)
+    can subscribe here and will instantly receive live agent events whenever
+    a /trigger is called from ANY device.
+    """
+    async def event_gen():
+        queue: asyncio.Queue = asyncio.Queue()
+
+        if resident_id not in broadcast_listeners:
+            broadcast_listeners[resident_id] = []
+        broadcast_listeners[resident_id].append(queue)
+
+        # Send initial handshake so the client knows it's connected
+        connected_event = {
+            "agent": "SYSTEM",
+            "event_type": "BROADCAST_CONNECTED",
+            "message": f"Broadcast channel open for {resident_id}. Waiting for health check trigger...",
+            "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")
+        }
+        yield f"data: {json.dumps(connected_event)}\n\n"
+
+        try:
+            while True:
+                try:
+                    # Wait up to 25s; send heartbeat comment if idle (keeps connection alive)
+                    event = await asyncio.wait_for(queue.get(), timeout=25.0)
+                    if event == "__DONE__":
+                        done_event = {
+                            "agent": "ORCHESTRATOR",
+                            "event_type": "COMPLETE",
+                            "message": "Health check complete. Alerts saved to Firestore.",
+                            "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")
+                        }
+                        yield f"data: {json.dumps(done_event)}\n\n"
+                        # Stay connected — next trigger will send more events
+                    else:
+                        yield f"data: {json.dumps(event)}\n\n"
+                except asyncio.TimeoutError:
+                    # SSE keepalive comment (invisible to client, prevents proxy timeouts)
+                    yield ": keepalive\n\n"
+        finally:
+            # Unregister this client's queue when it disconnects
+            try:
+                broadcast_listeners[resident_id].remove(queue)
+            except (ValueError, KeyError):
+                pass
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"  # Disable nginx buffering for real-time delivery
+        }
+    )
 
 # A2A Protocol Discovery Endpoints
 @app.get("/.well-known/agent.json")

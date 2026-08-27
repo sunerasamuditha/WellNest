@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WellNest | Physician EHR Gateway</title>
+    <meta name="description" content="WellNest Physician EHR — FHIR observations, medication records and clinical AI alerts.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0f2d5e;
+            --blue: #1d4ed8;
+            --blue-lt: #3b82f6;
+            --green: #059669;
+            --amber: #d97706;
+            --red: #dc2626;
+            --cyan: #0891b2;
+            --bg: #f8fafc;
+            --surf: #ffffff;
+            --bord: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --shadow: 0 1px 12px rgba(15,45,94,.07);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+
+        /* ── HEADER ── */
+        .hdr { background: var(--navy); padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 14px rgba(15,45,94,.35); }
+        .hdr-brand { display: flex; align-items: center; gap: 10px; }
+        .hdr-icon { width: 36px; height: 36px; background: rgba(255,255,255,.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .hdr-title { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 700; color: white; }
+        .hdr-sub { font-size: 0.65rem; color: rgba(255,255,255,.65); }
+        .conn-pill { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 5px 11px; font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,.85); }
+        .cdot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.3); }
+        .cdot.live { background: #34d399; animation: blink 2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* ── PATIENT TAB BAR ── */
+        .tab-bar { background: var(--surf); border-bottom: 2px solid var(--bord); padding: 10px 14px; display: flex; gap: 8px; overflow-x: auto; }
+        .ptab { flex-shrink: 0; padding: 7px 16px; border-radius: 8px; border: 2px solid var(--bord); background: var(--bg); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all .2s; color: var(--muted); white-space: nowrap; }
+        .ptab:hover { border-color: var(--blue-lt); color: var(--blue); }
+        .ptab.on { border-color: var(--navy); background: var(--navy); color: white; }
+
+        /* ── BODY ── */
+        .body { flex: 1; overflow-y: auto; padding: 14px 14px 84px; display: flex; flex-direction: column; gap: 12px; }
+
+        /* ── PATIENT HDR ── */
+        .phdr { background: var(--surf); border-radius: 14px; border: 1px solid var(--bord); padding: 16px; box-shadow: var(--shadow); display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+        .pav { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--blue-lt)); display: flex; align-items: center; justify-content: center; color: white; font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
+        .pname { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; }
+        .pmeta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .mchip { font-size: 0.68rem; padding: 3px 9px; border-radius: 10px; background: #f1f5f9; border: 1px solid var(--bord); color: var(--muted); font-weight: 500; }
+        .risk-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: 1px solid; }
+        .risk-LOW      { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+        .risk-INFO     { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+        .risk-ADVISORY { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+        .risk-WARNING  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .risk-CRITICAL { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
+        /* ── CARD ── */
+        .card { background: var(--surf); border-radius: 14px; border: 1px solid var(--bord); padding: 16px; box-shadow: var(--shadow); }
+        .card-hdr { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+        .card-hdr h3 { font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; }
+        .badge { font-size: 0.62rem; padding: 2px 8px; border-radius: 8px; background: #dbeafe; color: var(--blue); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .badge.red { background: #fee2e2; color: var(--red); }
+
+        /* ── FHIR OBSERVATIONS ── */
+        .obs-list { display: flex; flex-direction: column; gap: 8px; }
+        .obs-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg); border-radius: 8px; border: 1px solid var(--bord); }
+        .obs-lbl { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+        .obs-right { display: flex; align-items: center; gap: 8px; }
+        .obs-val { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700; color: var(--navy); }
+        .obs-unit { font-size: 0.65rem; color: var(--muted); }
+        .obs-pill { font-size: 0.62rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+        .obs-normal   { background: #d1fae5; color: #065f46; }
+        .obs-elevated { background: #fee2e2; color: #991b1b; }
+        .obs-low      { background: #fef3c7; color: #92400e; }
+
+        /* ── GRID 2 ── */
+        .g2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media(min-width:580px) { .g2 { grid-template-columns: 1fr 1fr; } }
+
+        /* ── MED TABLE ── */
+        .med-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .med-table th { text-align: left; padding: 7px 9px; color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--bord); font-size: 0.68rem; text-transform: uppercase; }
+        .med-table td { padding: 9px 9px; border-bottom: 1px solid var(--bord); }
+        .med-table tr:last-child td { border-bottom: none; }
+        .med-name { font-weight: 600; color: var(--navy); }
+        .med-sub  { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+        .med-route { font-size: 0.65rem; padding: 2px 7px; border-radius: 8px; background: #eff6ff; color: var(--blue); font-weight: 600; }
+
+        /* ── ALERT CARDS ── */
+        .inbox { display: flex; flex-direction: column; gap: 9px; }
+        .icard { padding: 12px; background: var(--bg); border-radius: 10px; border: 1px solid var(--bord); border-left: 4px solid var(--blue-lt); }
+        .icard.CRITICAL { border-left-color: var(--red); background: #fff5f5; }
+        .icard.WARNING  { border-left-color: var(--amber); background: #fffbeb; }
+        .icard.ADVISORY { border-left-color: var(--blue-lt); background: #eff6ff; }
+        .icard.INFO     { border-left-color: var(--green); background: #f0fdf4; }
+        .itop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .isev { font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
+        .CRITICAL .isev { background: #fee2e2; color: var(--red); }
+        .WARNING  .isev { background: #fef3c7; color: #92400e; }
+        .ADVISORY .isev { background: #dbeafe; color: #1e40af; }
+        .INFO     .isev { background: #d1fae5; color: #065f46; }
+        .itime { font-size: 0.65rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+        .imsg { font-size: 0.82rem; line-height: 1.55; }
+        .icorr { font-size: 0.72rem; color: var(--muted); margin-top: 6px; padding: 7px; background: white; border-radius: 6px; border: 1px solid var(--bord); }
+        .iacts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+        .iact { font-size: 0.65rem; padding: 3px 7px; border-radius: 8px; background: #f1f5f9; color: var(--muted); font-weight: 500; border: 1px solid var(--bord); }
+
+        /* ── FHIR JSON ── */
+        .json-box { background: #0f172a; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; border-radius: 8px; padding: 12px; overflow-x: auto; max-height: 200px; overflow-y: auto; line-height: 1.6; margin-top: 10px; display: none; }
+        .jk { color: #93c5fd; }
+        .js { color: #86efac; }
+        .jn { color: #fbbf24; }
+        .toggle-json { background: none; border: none; color: var(--blue-lt); font-size: 0.72rem; cursor: pointer; font-weight: 600; margin-left: auto; }
+
+        /* ── EMPTY ── */
+        .empty { text-align: center; padding: 24px; color: var(--muted); background: var(--bg); border-radius: 8px; border: 1px dashed var(--bord); font-size: 0.82rem; }
+
+        /* ── BOTTOM NAV ── */
+        .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surf); border-top: 1px solid var(--bord); display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 16px rgba(0,0,0,.07); }
+        .ni { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px 12px; gap: 4px; font-size: 0.62rem; font-weight: 600; color: var(--muted); text-decoration: none; border: none; background: none; cursor: pointer; transition: color .15s; }
+        .ni.on, .ni:hover { color: var(--navy); }
+
+        .spin { animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<header class="hdr">
+    <div class="hdr-brand">
+        <div class="hdr-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h3M15 15h3"/></svg>
+        </div>
+        <div>
+            <div class="hdr-title">Physician EHR Gateway</div>
+            <div class="hdr-sub">FHIR R4 · Firestore-backed · Live GCP Data</div>
+        </div>
+    </div>
+    <div class="conn-pill">
+        <div class="cdot" id="cdot"></div>
+        <span id="ctext">Connecting...</span>
+    </div>
+</header>
+
+<!-- PATIENT TAB BAR -->
+<div class="tab-bar" id="tab-bar">
+    <div style="color:var(--muted);font-size:0.78rem;line-height:2.2"><span class="spin">⏳</span> Loading patients...</div>
+</div>
+
+<!-- BODY -->
+<div class="body" id="body-content">
+    <div class="empty"><span class="spin">⏳</span> Loading clinical data from GCP Firestore...</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+    <a href="family-app.html" class="ni">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Family
+    </a>
+    <a href="health-check.html" class="ni">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Health Check
+    </a>
+    <a href="ehr-gateway.html" class="ni on">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h3M15 15h3"/></svg>
+        EHR
+    </a>
+</nav>
+
+<script>
+const GCP = 'https://wellnest-a2a-28869653773.us-central1.run.app';
+let selectedId = null;
+let residents = [];
+let showJson = false;
+
+/* ── CONN ── */
+async function checkConn() {
+    const dot = document.getElementById('cdot');
+    const txt = document.getElementById('ctext');
+    try {
+        const r = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(5000) });
+        if (r.ok) { dot.classList.add('live'); txt.textContent = 'Firestore Live'; }
+        else throw 0;
+    } catch { dot.classList.remove('live'); txt.textContent = 'Offline'; }
+}
+
+/* ── RESIDENTS ── */
+async function loadResidents() {
+    try {
+        const r = await fetch(`${GCP}/api/residents`);
+        residents = await r.json();
+        const bar = document.getElementById('tab-bar');
+        bar.innerHTML = '';
+        residents.forEach((res, i) => {
+            const t = document.createElement('div');
+            t.className = 'ptab' + (i === 0 ? ' on' : '');
+            t.textContent = res.name;
+            t.onclick = () => {
+                document.querySelectorAll('.ptab').forEach(x => x.classList.remove('on'));
+                t.classList.add('on');
+                selectedId = res.id;
+                loadData();
+            };
+            if (i === 0) selectedId = res.id;
+            bar.appendChild(t);
+        });
+        await loadData();
+    } catch(e) {
+        document.getElementById('tab-bar').innerHTML = '<div style="color:#dc2626;font-size:0.78rem">Failed to load from GCP</div>';
+    }
+}
+
+/* ── LOAD ALL DATA FOR SELECTED RESIDENT ── */
+async function loadData() {
+    document.getElementById('body-content').innerHTML = '<div class="empty"><span class="spin">⏳</span> Loading clinical data...</div>';
+    try {
+        const [pd, fhir, alerts] = await Promise.all([
+            fetch(`${GCP}/api/residents/${selectedId}`).then(r => r.json()),
+            fetch(`${GCP}/api/residents/${selectedId}/fhir`).then(r => r.json()),
+            fetch(`${GCP}/api/alerts`).then(r => r.json())
+        ]);
+        render(pd, fhir, alerts);
+    } catch(e) {
+        document.getElementById('body-content').innerHTML = `<div class="empty">⚠️ Could not load data from GCP.<br><small>${e.message}</small></div>`;
+    }
+}
+
+/* ── OBSERVATIONS ── */
+function renderObs(fhir) {
+    if (!fhir?.entry?.length) return '<div class="empty">No FHIR data available.</div>';
+    return '<div class="obs-list">' + fhir.entry.map(e => {
+        const obs = e.resource;
+        const display = obs.code?.coding?.[0]?.display || obs.code?.text || 'Observation';
+        const code = obs.code?.coding?.[0]?.code || '';
+        let val = '--', unit = '', statusCls = 'obs-normal', statusLbl = 'Normal';
+        if (obs.valueQuantity) {
+            val = obs.valueQuantity.value?.toFixed(1) || '--';
+            unit = obs.valueQuantity.unit || '';
+            const v = parseFloat(val);
+            if (code === '8867-4')  { /* HR */   if (v < 55) { statusCls='obs-low'; statusLbl='Low'; } else if (v > 100) { statusCls='obs-elevated'; statusLbl='Elevated'; } }
+            if (code === '80404-7') { /* Gait */ if (v < 0.65) { statusCls='obs-low'; statusLbl='Below Baseline'; } }
+        } else if (obs.component) {
+            const sys = obs.component.find(c => c.code?.coding?.[0]?.code === '8480-6');
+            const dia = obs.component.find(c => c.code?.coding?.[0]?.code === '8462-4');
+            const sv = sys?.valueQuantity?.value || 0;
+            const dv = dia?.valueQuantity?.value || 0;
+            val = `${sv}/${dv}`; unit = 'mmHg';
+            if (sv >= 140 || dv >= 90) { statusCls = 'obs-elevated'; statusLbl = 'Elevated'; }
+        }
+        return `<div class="obs-row">
+            <span class="obs-lbl">${display}</span>
+            <div class="obs-right">
+                <span class="obs-val">${val} <span class="obs-unit">${unit}</span></span>
+                <span class="obs-pill ${statusCls}">${statusLbl}</span>
+            </div>
+        </div>`;
+    }).join('') + '</div>';
+}
+
+/* ── MEDS ── */
+function renderMeds(profile) {
+    const meds = profile?.medications || [];
+    if (!meds.length) return '<div class="empty">No active medications on record.</div>';
+    return `<table class="med-table">
+        <thead><tr><th>Medication</th><th>Dose</th><th>Route</th></tr></thead>
+        <tbody>${meds.map(m => `<tr>
+            <td><div class="med-name">${m.name}</div><div class="med-sub">Started ${m.started || 'N/A'}</div></td>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${m.dose || '--'}</td>
+            <td><span class="med-route">${m.route || 'Oral'}</span></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+/* ── RENDER ── */
+function render(pd, fhir, allAlerts) {
+    const p = pd?.profile || {};
+    const residentAlerts = (allAlerts || [])
+        .filter(a => a.resident_id === selectedId)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    const topAlert = residentAlerts[0];
+    const risk = topAlert?.severity || 'LOW';
+
+    const alertsHTML = residentAlerts.length === 0
+        ? '<div class="empty">No clinical alerts from Firestore for this patient.</div>'
+        : residentAlerts.map(a => {
+            const acts = Array.isArray(a.actions) ? a.actions : [];
+            return `<div class="icard ${a.severity}">
+                <div class="itop">
+                    <span class="isev">${a.severity}</span>
+                    <span class="itime">${new Date(a.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="imsg">${a.message || ''}</div>
+                ${a.correlation ? `<div class="icorr">📋 ${a.correlation}</div>` : ''}
+                ${acts.length ? `<div class="iacts">${acts.map(t => `<span class="iact">${t.trim()}</span>`).join('')}</div>` : ''}
+            </div>`;
+        }).join('');
+
+    /* Build FHIR JSON string */
+    const fhirJson = JSON.stringify(fhir, null, 2)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"([^"]+)":/g, '<span class="jk">"$1":</span>')
+        .replace(/: "([^"]*)"/g, ': <span class="js">"$1"</span>')
+        .replace(/: (\d+\.?\d*)/g, ': <span class="jn">$1</span>');
+
+    document.getElementById('body-content').innerHTML = `
+        <!-- PATIENT HEADER -->
+        <div class="phdr">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+                <div class="pav">${(p.name||'?').charAt(0)}</div>
+                <div>
+                    <div class="pname">${p.name || 'Unknown'}</div>
+                    <div class="pmeta">
+                        <span class="mchip">Age ${p.age || '--'}</span>
+                        <span class="mchip">ID: ${selectedId}</span>
+                        ${(p.conditions||[]).map(c=>`<span class="mchip">${c}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+            <span class="risk-badge risk-${risk === 'INFO' ? 'LOW' : risk}">${risk === 'INFO' ? 'LOW' : risk} Risk</span>
+        </div>
+
+        <!-- FHIR VITALS -->
+        <div class="card">
+            <div class="card-hdr">
+                <h3>FHIR R4 Observation Bundle</h3>
+                <span class="badge">HL7 FHIR</span>
+                <button class="toggle-json" onclick="toggleJson()">View Raw JSON</button>
+            </div>
+            ${renderObs(fhir)}
+            <pre class="json-box" id="json-box">${fhirJson}</pre>
+        </div>
+
+        <!-- MEDS + ALERTS grid -->
+        <div class="g2">
+            <div class="card">
+                <div class="card-hdr"><h3>Active Medications</h3></div>
+                ${renderMeds(p)}
+            </div>
+            <div class="card">
+                <div class="card-hdr">
+                    <h3>AI Clinical Alerts</h3>
+                    ${residentAlerts.length ? `<span class="badge red">${residentAlerts.length} active</span>` : ''}
+                </div>
+                <div class="inbox">${alertsHTML}</div>
+            </div>
+        </div>
+
+        <div style="font-size:0.7rem;color:var(--muted);text-align:center;padding:4px 0 2px">
+            All data sourced live from GCP Firestore via <code style="font-family:'JetBrains Mono',monospace;font-size:0.66rem">wellnest-a2a-28869653773.us-central1.run.app</code><br>
+            Auto-refreshes every 10 seconds
+        </div>
+    `;
+    showJson = false; /* reset on re-render */
+}
+
+function toggleJson() {
+    showJson = !showJson;
+    const box = document.getElementById('json-box');
+    if (box) box.style.display = showJson ? 'block' : 'none';
+}
+
+/* ── INIT ── */
+checkConn();
+loadResidents();
+setInterval(loadData, 10000);
+setInterval(checkConn, 15000);
+</script>
+</body>
+</html>
