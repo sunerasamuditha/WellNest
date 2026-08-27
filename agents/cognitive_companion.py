@@ -20,5 +20,5 @@ cognitive_companion_agent = Agent(
     name="cognitive_companion",
     instruction=COGNITIVE_COMPANION_INSTRUCTION,
     tools=[escalate_to_human_tool],
-    model="gemini-3.1-flash-lite"
+    model="gemini-2.5-flash-lite"
 )

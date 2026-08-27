@@ -45,5 +45,5 @@ care_coordinator_agent = Agent(
     name="care_coordinator",
     instruction=CARE_COORDINATOR_INSTRUCTION,
     tools=[log_a2a_alert_tool],
-    model="gemini-3.1-flash-lite"
+    model="gemini-2.5-flash-lite"
 )
