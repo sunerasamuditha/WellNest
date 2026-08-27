@@ -8,7 +8,7 @@ import threading
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
@@ -354,6 +354,10 @@ def generate_report(req: ReportRequest):
 # Serve High-Fidelity UI Static Files
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 os.makedirs(STATIC_DIR, exist_ok=True)
+
+@app.get("/trigger", response_class=FileResponse)
+def serve_trigger():
+    return FileResponse(os.path.join(STATIC_DIR, "trigger.html"))
 
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
