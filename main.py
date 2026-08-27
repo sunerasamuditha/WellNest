@@ -163,77 +163,50 @@ def stream_agent_check(resident_id: str):
 
 # ─── BROADCAST TRIGGER: fires agents, pushes events to Firestore, and holds connection ─
 @app.post("/api/residents/{resident_id}/check/trigger")
-def trigger_broadcast_check(resident_id: str):
+async def trigger_broadcast_check(resident_id: str):
     """
     Trigger a health check that broadcasts live events to ALL clients subscribed
     to /check/broadcast (via Firestore).
-    We use a StreamingResponse here to hold the HTTP connection open, which prevents 
+    We await the execution here to hold the HTTP connection open, which prevents 
     Cloud Run from throttling the CPU while the background agents run.
     """
     if check_running.get(resident_id):
         return {"status": "already_running", "message": "A health check is already in progress for this resident."}
 
     check_running[resident_id] = True
-    # Clear old traces for this run
     clear_trace_events_db(resident_id)
 
-    async def event_generator():
-        session_id = f"broadcast_{uuid.uuid4().hex[:8]}"
-        collector = TraceCollector(session_id=session_id)
-        queue = asyncio.Queue()
-        
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.get_event_loop()
+    session_id = f"broadcast_{uuid.uuid4().hex[:8]}"
+    collector = TraceCollector(session_id=session_id)
+    
+    def listener(event):
+        if FIRESTORE_ACTIVE:
+            event['_ts'] = datetime.datetime.utcnow().isoformat()
+            save_trace_event_db(resident_id, event)
+            
+    collector.add_listener(listener)
 
-        def listener(event):
-            # Save to Firestore for cross-instance /broadcast clients
-            if FIRESTORE_ACTIVE:
-                # add timestamp for proper ordering in on_snapshot
-                event['_ts'] = datetime.datetime.utcnow().isoformat()
-                save_trace_event_db(resident_id, event)
-            # Push to local queue for the trigger caller (keeps their connection alive)
-            loop.call_soon_threadsafe(queue.put_nowait, event)
+    try:
+        set_vitals_frozen(resident_id, True)
+        # Block the request until agents finish, keeping Cloud Run CPU alive
+        await asyncio.to_thread(orchestrator.run_health_check, resident_id, collector)
+    except Exception as e:
+        err_event = {"agent": "ORCHESTRATOR", "event_type": "ERROR",
+                     "message": f"Check failed: {str(e)}",
+                     "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")}
+        listener(err_event)
+    finally:
+        set_vitals_frozen(resident_id, False)
+        check_running[resident_id] = False
+        # Sentinel to end the stream for broadcast listeners
+        done_event = {"agent": "ORCHESTRATOR", "event_type": "COMPLETE", "message": "Done."}
+        listener(done_event)
 
-        collector.add_listener(listener)
-
-        def run_check():
-            try:
-                set_vitals_frozen(resident_id, True)
-                orchestrator.run_health_check(resident_id, collector)
-            except Exception as e:
-                err_event = {"agent": "ORCHESTRATOR", "event_type": "ERROR",
-                             "message": f"Check failed: {str(e)}",
-                             "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")}
-                listener(err_event)
-            finally:
-                set_vitals_frozen(resident_id, False)
-                check_running[resident_id] = False
-                # Sentinel to end the stream
-                done_event = {"agent": "ORCHESTRATOR", "event_type": "COMPLETE", "message": "Done."}
-                listener(done_event)
-                loop.call_soon_threadsafe(queue.put_nowait, "DONE")
-
-        thread = threading.Thread(target=run_check, daemon=True)
-        thread.start()
-
-        yield f"data: {json.dumps({'status': 'triggered'})}\n\n"
-
-        while True:
-            try:
-                event = await asyncio.wait_for(queue.get(), timeout=25.0)
-                if event == "DONE":
-                    break
-                yield f"data: {json.dumps(event)}\n\n"
-            except asyncio.TimeoutError:
-                yield ": keepalive\n\n"
-
-    return StreamingResponse(
-        event_generator(), 
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
-    )
+    return {
+        "status": "completed",
+        "resident_id": resident_id,
+        "message": "Health check successfully completed."
+    }
 
 
 # ─── BROADCAST STREAM: subscribe to live events from Firestore ─────────
