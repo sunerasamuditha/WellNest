@@ -141,6 +141,7 @@
 // Relative endpoints — works seamlessly on GCP Cloud Run
 let selectedId = null;
 let running = false;
+let sseSource = null;
 
 // ── Check backend connectivity ──────────────────────────────
 async function checkConn() {
@@ -156,6 +157,52 @@ async function checkConn() {
     }
 }
 
+// ── Bi-directional SSE Subscription ─────────────────────────
+function subscribeToBroadcast(residentId) {
+    if (sseSource) { sseSource.close(); sseSource = null; }
+    
+    sseSource = new EventSource(`/api/residents/${residentId}/check/broadcast`);
+    
+    sseSource.onmessage = (event) => {
+        try {
+            const evt = JSON.parse(event.data);
+            const btn = document.getElementById('tbtn');
+            const lbl = document.getElementById('blabel');
+            const sbox = document.getElementById('sbox');
+            const stitle = document.getElementById('stitle');
+            const sdesc = document.getElementById('sdesc');
+
+            if (evt.event_type === 'START') {
+                running = true;
+                btn.classList.add('running');
+                btn.disabled = true;
+                lbl.textContent = 'Running...';
+                sbox.style.display = 'block';
+                stitle.textContent = '⚡ Multi-Agent Check Active on GCP!';
+                sdesc.innerHTML = `Event from <strong>${evt.agent}</strong>...<br>Look at your <strong>main desktop screen</strong> to watch agents stream live!`;
+            } else if (evt.event_type === 'COMPLETE') {
+                running = false;
+                btn.classList.remove('running');
+                btn.disabled = false;
+                lbl.textContent = 'Run Check';
+                sbox.style.display = 'block';
+                stitle.textContent = '✅ Health Check Completed!';
+                sdesc.innerHTML = 'All 4 AI agents completed their clinical audit.<br>The main desktop dashboard has been updated.';
+            } else if (evt.event_type !== 'BROADCAST_CONNECTED' && running) {
+                stitle.textContent = `⚡ Agent Active: ${evt.agent}`;
+                sdesc.innerHTML = `${evt.message || ''}<br>Look at your <strong>main desktop screen</strong> to watch real-time trace.`;
+            }
+        } catch (e) {
+            console.error("SSE parse error", e);
+        }
+    };
+
+    sseSource.onerror = () => {
+        if (sseSource) { sseSource.close(); sseSource = null; }
+        setTimeout(() => { if (selectedId === residentId) subscribeToBroadcast(residentId); }, 4000);
+    };
+}
+
 // ── Load residents ──────────────────────────────────────────
 async function loadResidents() {
     try {
@@ -168,7 +215,10 @@ async function loadResidents() {
         residents.forEach((res, i) => {
             const row = document.createElement('div');
             row.className = 'res-row' + (i === 0 ? ' sel' : '');
-            if (i === 0) selectedId = res.id;
+            if (i === 0) {
+                selectedId = res.id;
+                subscribeToBroadcast(selectedId);
+            }
             row.innerHTML = `
                 <div class="res-row-l">
                     <div class="rav">${res.name.charAt(0)}</div>
@@ -186,6 +236,7 @@ async function loadResidents() {
                 document.querySelectorAll('.res-row').forEach(r => r.classList.remove('sel'));
                 row.classList.add('sel');
                 selectedId = res.id;
+                subscribeToBroadcast(selectedId);
             };
             el.appendChild(row);
         });
@@ -210,33 +261,19 @@ async function runCheck() {
 
     btn.classList.add('running');
     btn.disabled = true;
-    lbl.textContent = 'Running...';
+    lbl.textContent = 'Triggering...';
     
     sbox.style.display = 'block';
-    stitle.textContent = '⚡ AI Agents Running on GCP...';
-    sdesc.innerHTML = 'Look at your <strong>main desktop screen</strong> right now!<br>The 4 AI agents are executing and streaming live events via Firestore.';
+    stitle.textContent = '⚡ Dispatching Trigger to GCP...';
+    sdesc.innerHTML = 'Sending command to GCP Cloud Run...<br>Watch your main desktop screen!';
 
     try {
-        const res = await fetch(`/api/residents/${selectedId}/check/trigger`, { 
+        await fetch(`/api/residents/${selectedId}/check/trigger`, { 
             method: 'POST',
-            signal: AbortSignal.timeout(180000) // 3 min timeout
+            signal: AbortSignal.timeout(180000)
         });
-
-        if (res.ok) {
-            stitle.textContent = '✅ Health Check Completed!';
-            sdesc.innerHTML = 'All 4 AI agents completed their clinical audit.<br>The main desktop dashboard has been updated.';
-        } else {
-            stitle.textContent = '⚡ Check Triggered';
-            sdesc.innerHTML = `Trigger request sent to GCP. Watch main desktop screen.`;
-        }
     } catch (e) {
-        stitle.textContent = '⚡ Trigger Dispatched';
-        sdesc.innerHTML = 'The health check command was dispatched to GCP.<br>Check your main desktop screen for live updates.';
-    } finally {
-        btn.classList.remove('running');
-        btn.disabled = false;
-        lbl.textContent = 'Run Check';
-        running = false;
+        console.log("Trigger request completed or dispatched");
     }
 }
 

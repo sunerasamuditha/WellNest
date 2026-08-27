@@ -183,6 +183,15 @@ async def trigger_broadcast_check(resident_id: str):
             
     collector.add_listener(listener)
 
+    # Immediately publish initial START event to Firestore so all clients react instantly
+    start_event = {
+        "agent": "ORCHESTRATOR",
+        "event_type": "START",
+        "message": f"Booting Asynchronous Event Bus for Multi-Agent Clinical Audit ({resident_id})",
+        "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")
+    }
+    listener(start_event)
+
     try:
         set_vitals_frozen(resident_id, True)
         # Block the request until agents finish, keeping Cloud Run CPU alive
@@ -207,48 +216,45 @@ async def trigger_broadcast_check(resident_id: str):
 
 # ─── BROADCAST STREAM: subscribe to live events from Firestore ─────────
 @app.get("/api/residents/{resident_id}/check/broadcast")
-def broadcast_stream(resident_id: str):
+async def broadcast_stream(resident_id: str):
     """
-    Persistent SSE endpoint. Desktop dashboard connects here.
+    Persistent SSE endpoint. Desktop dashboard and mobile remotes connect here.
     Listens to Firestore `live_traces` in real-time, bridging events across all Cloud Run instances.
     """
-    async def event_gen():
-        queue: asyncio.Queue = asyncio.Queue()
+    queue: asyncio.Queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    watch = None
+
+    if FIRESTORE_ACTIVE:
+        def on_snapshot(col_snapshot, changes, read_time):
+            # Only push added events (ignore modifications/deletions)
+            for change in changes:
+                if change.type.name == 'ADDED':
+                    event = change.document.to_dict()
+                    if '_ts' in event:
+                        del event['_ts']
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
+        
+        # Watch the collection for this resident
         try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.get_event_loop()
-
-        watch = None
-
-        if FIRESTORE_ACTIVE:
-            def on_snapshot(col_snapshot, changes, read_time):
-                # Only push added events (ignore modifications/deletions)
-                for change in changes:
-                    if change.type.name == 'ADDED':
-                        event = change.document.to_dict()
-                        if '_ts' in event:
-                            del event['_ts']
-                        loop.call_soon_threadsafe(queue.put_nowait, event)
-            
-            # Watch the collection for this resident
+            # Try ordered query first
+            query = firestore_client.collection(f"live_traces_{resident_id}").order_by('_ts')
+            watch = query.on_snapshot(on_snapshot)
+        except Exception as e:
+            logger.warning(f"Firestore ordered watch failed ({e}). Trying unordered collection watch...")
             try:
-                # Try ordered query first
-                query = firestore_client.collection(f"live_traces_{resident_id}").order_by('_ts')
+                query = firestore_client.collection(f"live_traces_{resident_id}")
                 watch = query.on_snapshot(on_snapshot)
-            except Exception as e:
-                logger.warning(f"Firestore ordered watch failed ({e}). Trying unordered collection watch...")
-                try:
-                    query = firestore_client.collection(f"live_traces_{resident_id}")
-                    watch = query.on_snapshot(on_snapshot)
-                except Exception as e2:
-                    logger.error(f"Firestore unordered watch failed: {e2}")
-        else:
-            # Fallback to local memory if Firestore isn't configured
-            if resident_id not in broadcast_listeners:
-                broadcast_listeners[resident_id] = []
-            broadcast_listeners[resident_id].append(queue)
+            except Exception as e2:
+                logger.error(f"Firestore unordered watch failed: {e2}")
+    else:
+        # Fallback to local memory if Firestore isn't configured
+        if resident_id not in broadcast_listeners:
+            broadcast_listeners[resident_id] = []
+        broadcast_listeners[resident_id].append(queue)
 
+    async def event_gen():
         # Send initial handshake
         connected_event = {
             "agent": "SYSTEM",
@@ -263,14 +269,14 @@ def broadcast_stream(resident_id: str):
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=25.0)
                     yield f"data: {json.dumps(event)}\n\n"
-                    if event.get("event_type") == "COMPLETE":
-                        # Stay connected for the next run
-                        pass
                 except asyncio.TimeoutError:
                     yield ": keepalive\n\n"
         finally:
             if watch:
-                watch.unsubscribe()
+                try:
+                    watch.unsubscribe()
+                except Exception:
+                    pass
             if not FIRESTORE_ACTIVE:
                 try:
                     broadcast_listeners[resident_id].remove(queue)
