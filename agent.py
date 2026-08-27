@@ -46,7 +46,7 @@ def invoke_agent(runner: Runner, prompt: str, user_id: str, session_id: str, col
         collector.log(
             agent=agent_name,
             event_type="LLM_REQUEST",
-            message=f"Invoking Gemini 2.5 Flash Lite on model {runner.agent.model or 'gemini-2.5-flash-lite'}",
+            message=f"Invoking Gemini 2.5 Flash on model {runner.agent.model or 'gemini-2.5-flash'}",
             data={"prompt": prompt}
         )
 

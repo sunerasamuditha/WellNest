@@ -26,5 +26,5 @@ sensory_guardian_agent = Agent(
     name="sensory_guardian",
     instruction=SENSORY_GUARDIAN_INSTRUCTION,
     tools=[get_resident_vitals_tool, get_gait_trend_tool],
-    model="gemini-2.5-flash-lite"
+    model="gemini-2.5-flash"
 )

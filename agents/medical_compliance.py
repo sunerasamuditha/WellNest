@@ -27,5 +27,5 @@ medical_compliance_agent = Agent(
     name="medical_compliance",
     instruction=MEDICAL_COMPLIANCE_INSTRUCTION,
     tools=[get_resident_details_tool, check_drug_side_effects, check_drug_interactions],
-    model="gemini-2.5-flash-lite"
+    model="gemini-2.5-flash"
 )

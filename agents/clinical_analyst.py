@@ -99,5 +99,5 @@ clinical_analyst_agent = Agent(
     name="clinical_analyst",
     instruction=CLINICAL_ANALYST_INSTRUCTION,
     tools=[get_patient_alert_history, export_pdf_report],
-    model="gemini-2.5-flash-lite"
+    model="gemini-2.5-flash"
 )
