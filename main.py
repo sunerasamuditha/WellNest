@@ -166,7 +166,7 @@ def stream_agent_check(resident_id: str):
 async def trigger_broadcast_check(resident_id: str):
     """
     Trigger a health check that broadcasts live events to ALL clients subscribed
-    to /check/broadcast (via Firestore).
+    to /check/broadcast (via Firestore and/or in-memory pub/sub).
     We await the execution here to hold the HTTP connection open, which prevents 
     Cloud Run from throttling the CPU while the background agents run.
     """
@@ -176,14 +176,24 @@ async def trigger_broadcast_check(resident_id: str):
     session_id = f"broadcast_{uuid.uuid4().hex[:8]}"
     collector = TraceCollector(session_id=session_id)
     
+    main_loop = asyncio.get_running_loop()
+
     def listener(event):
         if FIRESTORE_ACTIVE:
             event['_ts'] = datetime.datetime.utcnow().isoformat()
             save_trace_event_db(resident_id, event)
+        
+        # ALWAYS dispatch to in-memory listeners for instantaneous local/instance sync
+        if resident_id in broadcast_listeners:
+            for q in list(broadcast_listeners[resident_id]):
+                try:
+                    main_loop.call_soon_threadsafe(q.put_nowait, event)
+                except Exception:
+                    pass
             
     collector.add_listener(listener)
 
-    # Immediately publish initial START event to Firestore so all clients react instantly
+    # Immediately publish initial START event so all clients react instantly
     start_event = {
         "agent": "ORCHESTRATOR",
         "event_type": "START",
@@ -214,7 +224,7 @@ async def trigger_broadcast_check(resident_id: str):
     }
 
 
-# ─── BROADCAST STREAM: subscribe to live events from Firestore ─────────
+# ─── BROADCAST STREAM: subscribe to live events from Firestore / Memory ─
 @app.get("/api/residents/{resident_id}/check/broadcast")
 async def broadcast_stream(resident_id: str):
     """
@@ -224,9 +234,13 @@ async def broadcast_stream(resident_id: str):
     queue: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_running_loop()
 
+    if resident_id not in broadcast_listeners:
+        broadcast_listeners[resident_id] = []
+    broadcast_listeners[resident_id].append(queue)
+
     watch = None
 
-    if FIRESTORE_ACTIVE:
+    if FIRESTORE_ACTIVE and firestore_client is not None:
         def on_snapshot(col_snapshot, changes, read_time):
             # Only push added events (ignore modifications/deletions)
             for change in changes:
@@ -238,7 +252,6 @@ async def broadcast_stream(resident_id: str):
         
         # Watch the collection for this resident
         try:
-            # Try ordered query first
             query = firestore_client.collection(f"live_traces_{resident_id}").order_by('_ts')
             watch = query.on_snapshot(on_snapshot)
         except Exception as e:
@@ -248,18 +261,13 @@ async def broadcast_stream(resident_id: str):
                 watch = query.on_snapshot(on_snapshot)
             except Exception as e2:
                 logger.error(f"Firestore unordered watch failed: {e2}")
-    else:
-        # Fallback to local memory if Firestore isn't configured
-        if resident_id not in broadcast_listeners:
-            broadcast_listeners[resident_id] = []
-        broadcast_listeners[resident_id].append(queue)
 
     async def event_gen():
         # Send initial handshake
         connected_event = {
             "agent": "SYSTEM",
             "event_type": "BROADCAST_CONNECTED",
-            "message": f"Broadcast channel open (Firestore Sync active). Waiting for trigger...",
+            "message": f"Broadcast channel open (Firestore: {FIRESTORE_ACTIVE}). Waiting for trigger...",
             "timestamp_str": datetime.datetime.utcnow().strftime("%H:%M:%S")
         }
         yield f"data: {json.dumps(connected_event)}\n\n"
@@ -277,11 +285,10 @@ async def broadcast_stream(resident_id: str):
                     watch.unsubscribe()
                 except Exception:
                     pass
-            if not FIRESTORE_ACTIVE:
-                try:
-                    broadcast_listeners[resident_id].remove(queue)
-                except (ValueError, KeyError):
-                    pass
+            try:
+                broadcast_listeners[resident_id].remove(queue)
+            except (ValueError, KeyError):
+                pass
 
     return StreamingResponse(
         event_gen(),

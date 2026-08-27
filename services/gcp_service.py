@@ -21,19 +21,39 @@ PROJECT_ID = os.environ.get("PROJECT_ID", "wellnest-a2a")
 try:
     from google.cloud import firestore
     db_name = os.environ.get("FIRESTORE_DATABASE", "wellnest-firestore")
+    connected = False
+    
+    # Try named database first
     try:
-        firestore_client = firestore.Client(project=PROJECT_ID, database=db_name)
-        # Test connection by listing collections (lightweight check)
-        list(firestore_client.collections(page_size=1))
-        logger.info(f"[GCP Config] Cloud Firestore client initialized for database: {db_name}")
+        candidate_client = firestore.Client(project=PROJECT_ID, database=db_name)
+        candidate_client.collection("_health_check").document("ping").get(timeout=3.0)
+        firestore_client = candidate_client
+        connected = True
+        logger.info(f"[GCP Config] Cloud Firestore active for database: {db_name}")
     except Exception as e1:
-        logger.info(f"[GCP Config] Named database '{db_name}' unavailable ({e1}). Falling back to default Firestore database...")
-        firestore_client = firestore.Client(project=PROJECT_ID)
-        logger.info(f"[GCP Config] Cloud Firestore client initialized for default database.")
+        logger.info(f"[GCP Config] Named database '{db_name}' not available ({e1}). Trying default database...")
         
-    FIRESTORE_ACTIVE = True
+    # Try default database second
+    if not connected:
+        try:
+            candidate_client = firestore.Client(project=PROJECT_ID)
+            candidate_client.collection("_health_check").document("ping").get(timeout=3.0)
+            firestore_client = candidate_client
+            connected = True
+            logger.info(f"[GCP Config] Cloud Firestore active for default database.")
+        except Exception as e2:
+            logger.warning(f"[GCP Config] Default Firestore database not available ({e2}).")
+
+    if connected:
+        FIRESTORE_ACTIVE = True
+    else:
+        firestore_client = None
+        FIRESTORE_ACTIVE = False
+        logger.warning("[GCP Config] Firestore database not provisioned on GCP. Using robust local in-memory event bus.")
 except Exception as e:
-    logger.warning(f"[GCP Config] Could not initialize Cloud Firestore client: {e}. Defaulting to local JSON storage.")
+    FIRESTORE_ACTIVE = False
+    firestore_client = None
+    logger.warning(f"[GCP Config] Could not initialize Cloud Firestore client: {e}. Defaulting to local in-memory event bus.")
 
 # Attempt to initialize Pub/Sub Client
 try:
