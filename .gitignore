@@ -37,3 +37,6 @@ Thumbs.db
 *.sqlite
 data/db.sqlite3
 data/alerts_timeline.json
+
+# Markdown documents
+wellnest_*.md
