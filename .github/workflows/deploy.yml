@@ -46,4 +46,6 @@ jobs:
           region: ${{ env.REGION }}
           flags: "--allow-unauthenticated --memory 1024Mi"
           env_vars: |
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            GOOGLE_GENAI_USE_VERTEXAI=true
+            GOOGLE_CLOUD_PROJECT=wellnest-a2a
+            GOOGLE_CLOUD_LOCATION=us-central1
