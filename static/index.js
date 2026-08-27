@@ -307,23 +307,14 @@ function triggerAgentCheck() {
 
     const btn = document.getElementById("trigger-check-btn");
     btn.disabled = true;
-    btn.innerText = "Triggering...";
+    btn.innerText = "Agents Running...";
 
     // POST to /trigger — agents start on GCP, broadcast SSE will deliver events
+    // We do NOT await the JSON response immediately because this request 
+    // intentionally blocks for 60-90s to keep Cloud Run CPU alive.
     fetch(getApiBaseUrl() + `/api/residents/${activeResidentId}/check/trigger`, { method: 'POST' })
-        .then(r => r.json())
-        .then(data => {
-            if (data.status === 'already_running') {
-                btn.innerText = "Already Running...";
-                return;
-            }
-            // The broadcast SSE (already open) will now receive events automatically
-            btn.innerText = "Agents Running...";
-        })
         .catch(err => {
-            console.error('Trigger failed:', err);
-            btn.disabled = false;
-            btn.innerText = "Run Multi-Agent Health Check";
+            console.log('Trigger fetch closed/timeout (expected):', err);
         });
 }
 

@@ -280,70 +280,12 @@ async function runCheck() {
     const agentOrder = ['SENSORY_GUARDIAN', 'MEDICAL_COMPLIANCE', 'COGNITIVE_COMPANION', 'CARE_COORDINATOR'];
     const agentsSeen = new Set();
 
-    // ── STEP 1: POST /check/trigger ──────────────────────────
-    // This tells GCP to start the AI agents in a background thread.
-    // The response comes back immediately (fire-and-forget style).
-    // All GCP-connected clients (incl. the main dashboard at the GCP URL)
-    // are subscribed to /check/broadcast and will receive events live.
-    addLog('SYSTEM', `Sending trigger to GCP for resident: ${selectedId}`);
-    addLog('SYSTEM', `Endpoint: POST ${GCP}/api/residents/${selectedId}/check/trigger`);
+    addLog('SYSTEM', `Preparing health check for resident: ${selectedId}...`);
+    pbar.style.width = '5%';
 
-    try {
-        const trigRes = await fetch(
-            `${GCP}/api/residents/${selectedId}/check/trigger`,
-            { method: 'POST', signal: AbortSignal.timeout(12000) }
-        );
-
-        if (!trigRes.ok) {
-            throw new Error(`Trigger endpoint returned HTTP ${trigRes.status}`);
-        }
-
-        const trigData = await trigRes.json();
-
-        if (trigData.status === 'already_running') {
-            addLog('SYSTEM', 'Check already running on GCP. Subscribing to the live feed...');
-        } else {
-            addLog('ORCHESTRATOR', 'Health check triggered on GCP. Agents starting...');
-            addLog('SYSTEM', 'The main dashboard (wellnest-a2a...run.app) will update automatically.');
-        }
-
-    } catch (e) {
-        // /trigger endpoint might not exist yet (pre-deployment) — fall back to /check POST
-        addLog('SYSTEM', `Trigger endpoint unavailable (${e.message}). Trying direct POST...`);
-
-        try {
-            addLog('SYSTEM', `POST ${GCP}/api/residents/${selectedId}/check`);
-            pbar.style.width = '20%';
-            const checkRes = await fetch(
-                `${GCP}/api/residents/${selectedId}/check`,
-                { method: 'POST', signal: AbortSignal.timeout(180000) }
-            );
-            if (!checkRes.ok) throw new Error('HTTP ' + checkRes.status);
-            const checkData = await checkRes.json();
-            addLog('ORCHESTRATOR', 'Health check completed (synchronous mode).');
-            pbar.style.width = '90%';
-        } catch (e2) {
-            addLog('SYSTEM', `ERROR: ${e2.message}`);
-            result.innerHTML = `
-                <div class="result-card crit">
-                    <div class="rt">❌ Could Not Reach GCP</div>
-                    <div class="rm">
-                        Failed to connect to ${GCP}<br><br>
-                        Error: ${e2.message}<br><br>
-                        Make sure you have internet access and the Cloud Run service is running.
-                    </div>
-                </div>`;
-            resetBtn();
-            return;
-        }
-    }
-
-    // ── STEP 2: Subscribe to /check/broadcast ────────────────
-    // This is a persistent SSE channel. GCP pushes events to this page
-    // AND to the main dashboard simultaneously — both see the same stream.
-    addLog('SYSTEM', `Subscribing to broadcast channel...`);
-    pbar.style.width = '10%';
-
+    // ── STEP 1: Subscribe to /check/broadcast FIRST ────────────────
+    addLog('SYSTEM', `Subscribing to broadcast channel (Firestore Sync)...`);
+    
     await new Promise(resolve => {
         let resolved = false;
 
@@ -363,15 +305,16 @@ async function runCheck() {
             const agent  = (ev.agent || 'SYSTEM').toUpperCase().replace(/ /g, '_');
             const msg    = ev.message || '';
 
-            // Ignore the initial connection handshake noise
+            // Connection handshake
             if (evType === 'BROADCAST_CONNECTED') {
-                addLog('SYSTEM', 'Broadcast channel connected. Waiting for agent events...');
+                addLog('SYSTEM', msg);
+                // Step 2: Now that we are listening, fire the trigger!
+                fireTrigger();
                 return;
             }
 
             addLog(agent, msg);
 
-            // Track progress
             if (agentOrder.includes(agent)) {
                 agentsSeen.add(agent);
                 const n = agentOrder.filter(a => agentsSeen.has(a)).length;
@@ -379,7 +322,6 @@ async function runCheck() {
                 stat.textContent = `${agentsSeen.size}/4 agents`;
             }
 
-            // COMPLETE sentinel — check is done
             if (evType === 'COMPLETE') {
                 pbar.style.width = '100%';
                 src.close();
@@ -389,11 +331,27 @@ async function runCheck() {
 
         src.onerror = function() {
             src.close();
-            addLog('SYSTEM', 'Broadcast stream ended. Fetching final result from Firestore...');
+            addLog('SYSTEM', 'Broadcast stream ended or interrupted.');
             done();
         };
 
-        // Hard timeout: 3 minutes
+        // Fire the actual POST request
+        function fireTrigger() {
+            addLog('SYSTEM', `POST ${GCP}/api/residents/${selectedId}/check/trigger`);
+            // We DO NOT await this here, because it blocks for 90 seconds.
+            // The Cloud Run server stays active because the connection is open.
+            fetch(`${GCP}/api/residents/${selectedId}/check/trigger`, { method: 'POST' })
+                .then(r => {
+                    if (r.status === 504) {
+                        addLog('SYSTEM', 'Gateway timeout (this is normal for long Cloud Run requests).');
+                    }
+                })
+                .catch(e => {
+                    addLog('SYSTEM', `Trigger disconnected: ${e.message}`);
+                });
+        }
+        
+        // Safety timeout
         setTimeout(() => {
             src.close();
             done();
