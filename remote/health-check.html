@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WellNest | Health Check</title>
-    <meta name="description" content="WellNest Health Check — trigger the real AI clinical pipeline on GCP from any device.">
+    <title>WellNest | Remote Control</title>
+    <meta name="description" content="WellNest Remote Control — trigger the real AI clinical pipeline on GCP from any mobile or desktop device.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --ind: #4f46e5; --ind-lt: #6366f1; --purp: #7c3aed;
@@ -45,52 +45,34 @@
         .rcheck { color:var(--ind-lt); opacity:0; transition:opacity .2s; }
         .res-row.sel .rcheck { opacity:1; }
 
-        .trigger-wrap { display:flex; flex-direction:column; align-items:center; gap:14px; padding:8px 0; }
+        .trigger-wrap { display:flex; flex-direction:column; align-items:center; gap:16px; padding:12px 0; }
         .trigger-btn {
-            width:150px; height:150px; border-radius:50%; border:none;
+            width:160px; height:160px; border-radius:50%; border:none;
             background:linear-gradient(135deg,var(--ind),var(--purp));
             cursor:pointer; color:white;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
-            font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:700;
-            box-shadow:0 0 40px rgba(79,70,229,.45);
+            font-family:'Outfit',sans-serif; font-size:1rem; font-weight:700;
+            box-shadow:0 0 45px rgba(79,70,229,.45);
             transition:all .3s; touch-action:manipulation;
         }
         .trigger-btn:hover { transform:scale(1.05); box-shadow:0 0 65px rgba(79,70,229,.65); }
         .trigger-btn:active { transform:scale(.96); }
         .trigger-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-        .trigger-btn.running { animation:ring 1.4s ease infinite; }
+        .trigger-btn.running { animation:ring 1.4s ease infinite; background:linear-gradient(135deg,var(--amber),#d97706); }
         @keyframes ring {
-            0%   { box-shadow:0 0 0 0 rgba(79,70,229,.65),0 0 40px rgba(79,70,229,.45); }
-            70%  { box-shadow:0 0 0 28px rgba(79,70,229,0),0 0 40px rgba(79,70,229,.45); }
-            100% { box-shadow:0 0 0 0 rgba(79,70,229,0),0 0 40px rgba(79,70,229,.45); }
+            0%   { box-shadow:0 0 0 0 rgba(245,158,11,.65),0 0 40px rgba(245,158,11,.45); }
+            70%  { box-shadow:0 0 0 28px rgba(245,158,11,0),0 0 40px rgba(245,158,11,.45); }
+            100% { box-shadow:0 0 0 0 rgba(245,158,11,0),0 0 40px rgba(245,158,11,.45); }
         }
-        .trigger-hint { font-size:0.75rem; color:var(--muted); text-align:center; max-width:240px; line-height:1.6; }
+        .trigger-hint { font-size:0.78rem; color:var(--muted); text-align:center; max-width:260px; line-height:1.6; }
 
-        .prog-bar-wrap { background:rgba(255,255,255,.06); border-radius:6px; height:6px; overflow:hidden; margin-bottom:10px; }
-        .prog-bar { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--ind),var(--purp)); width:0%; transition:width .6s ease; }
-
-        .log-box { background:#07070f; border:1px solid rgba(99,102,241,.15); border-radius:10px; padding:12px; height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; font-family:'JetBrains Mono',monospace; font-size:0.7rem; }
-        .ll { display:flex; gap:8px; line-height:1.5; word-break:break-word; }
-        .lt { color:#374151; flex-shrink:0; }
-        .la { flex-shrink:0; font-weight:600; min-width:80px; }
-        .lm { color:#9ca3af; }
-        .la.ORCHESTRATOR { color:#f59e0b; }
-        .la.SENSORY_GUARDIAN { color:#6366f1; }
-        .la.MEDICAL_COMPLIANCE { color:#ec4899; }
-        .la.COGNITIVE_COMPANION { color:#10b981; }
-        .la.CARE_COORDINATOR { color:#8b5cf6; }
-        .la.SYSTEM { color:#4b5563; }
-
-        .result-card { border-radius:12px; padding:16px; border:1px solid; animation:rise .4s ease; margin-top:4px; }
-        @keyframes rise { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        .result-card.safe { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.3); }
-        .result-card.warn { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.3); }
-        .result-card.crit { background:rgba(239,68,68,.1); border-color:rgba(239,68,68,.3); }
-        .rt { font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:6px; }
-        .rm { font-size:0.83rem; color:var(--muted); line-height:1.6; }
-        .acts { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
-        .act { font-size:0.68rem; padding:3px 9px; border-radius:10px; background:rgba(255,255,255,.08); color:var(--muted); font-weight:500; }
-        .note { font-size:0.7rem; color:var(--muted); text-align:center; margin-top:8px; }
+        .status-box {
+            display:none; background:rgba(79,70,229,.12); border:1px solid rgba(99,102,241,.3);
+            border-radius:12px; padding:16px; text-align:center; animation:fadeIn .3s ease;
+        }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+        .status-title { font-family:'Outfit',sans-serif; font-weight:700; font-size:0.95rem; margin-bottom:6px; color:#a5b4fc; }
+        .status-desc { font-size:0.78rem; color:var(--muted); line-height:1.5; }
 
         .bnav { position:fixed; bottom:0; left:0; right:0; background:rgba(22,22,42,.95); backdrop-filter:blur(14px); border-top:1px solid var(--bord); display:flex; z-index:50; padding-bottom:env(safe-area-inset-bottom); }
         .ni { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 6px 12px; gap:4px; font-size:0.62rem; font-weight:600; color:var(--muted); text-decoration:none; border:none; background:none; cursor:pointer; transition:color .15s; }
@@ -105,8 +87,8 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </div>
         <div>
-            <div class="hdr-title">Health Check</div>
-            <div class="hdr-sub">Runs on GCP · Gemini 2.5 Flash · All dashboards update live</div>
+            <div class="hdr-title">Remote Control</div>
+            <div class="hdr-sub">GCP Health Check Trigger</div>
         </div>
     </div>
     <div class="conn-pill">
@@ -121,38 +103,34 @@
     <div class="card">
         <div class="card-title"><span>👤</span> Select Resident</div>
         <div class="res-list" id="res-list">
-            <div style="color:var(--muted);font-size:0.85rem;padding:12px;text-align:center">Loading from GCP...</div>
+            <div style="color:var(--muted);font-size:0.85rem;padding:12px;text-align:center">Connecting to GCP...</div>
         </div>
     </div>
 
-    <!-- TRIGGER -->
+    <!-- TRIGGER BUTTON -->
     <div class="card">
-        <div class="card-title"><span>🤖</span> Launch AI Health Check</div>
+        <div class="card-title"><span>📱</span> Trigger Health Check</div>
         <div class="trigger-wrap">
             <button class="trigger-btn" id="tbtn" onclick="runCheck()">
-                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
                 <span id="blabel">Run Check</span>
             </button>
             <div class="trigger-hint" id="thint">
-                Sends a request to GCP Cloud Run.<br>The AI agents execute on the server.<br>The main dashboard updates live.
+                Tap to send a trigger request to GCP.<br>The live agent trace will stream on your main desktop app!
             </div>
         </div>
     </div>
 
-    <!-- LIVE LOG — hidden until running -->
-    <div class="card" id="log-card" style="display:none">
-        <div class="card-title">
-            <span>📡</span> Live Agent Stream
-            <span id="agent-stat" style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted)"></span>
+    <!-- STATUS DISPLAY -->
+    <div class="status-box" id="sbox">
+        <div class="status-title" id="stitle">⚡ Triggering GCP Cloud Run...</div>
+        <div class="status-desc" id="sdesc">
+            The AI Multi-Agent Audit is executing on GCP.<br>
+            <strong>Look at your main desktop screen</strong> to watch the agents stream live!
         </div>
-        <div class="prog-bar-wrap"><div class="prog-bar" id="pbar"></div></div>
-        <div class="log-box" id="log-box"></div>
     </div>
-
-    <!-- RESULT -->
-    <div id="result-wrap"></div>
 
 </div>
 
@@ -163,7 +141,7 @@
     </a>
     <a class="ni on">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        Health Check
+        Trigger
     </a>
     <a href="ehr-gateway.html" class="ni">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h3M15 15h3"/></svg>
@@ -172,19 +150,11 @@
 </nav>
 
 <script>
-/* ─────────────────────────────────────────────────────────────
-   This page is a THIN CLIENT.
-   - All AI computation happens on GCP Cloud Run.
-   - This file contains ZERO agent logic.
-   - "Run Check" → POST to GCP → GCP runs agents → GCP broadcasts
-     events to ALL connected clients (this page + the main dashboard).
-───────────────────────────────────────────────────────────── */
-
 const GCP = 'https://wellnest-a2a-28869653773.us-central1.run.app';
 let selectedId = null;
 let running = false;
 
-// ── Connection check ──────────────────────────────────────────
+// ── Check backend connectivity ──────────────────────────────
 async function checkConn() {
     const dot = document.getElementById('cdot');
     const txt = document.getElementById('ctext');
@@ -198,7 +168,7 @@ async function checkConn() {
     }
 }
 
-// ── Load residents from GCP backend ──────────────────────────
+// ── Load residents ──────────────────────────────────────────
 async function loadResidents() {
     try {
         const r = await fetch(`${GCP}/api/residents`, { signal: AbortSignal.timeout(10000) });
@@ -224,6 +194,7 @@ async function loadResidents() {
                 </svg>
             `;
             row.onclick = () => {
+                if (running) return;
                 document.querySelectorAll('.res-row').forEach(r => r.classList.remove('sel'));
                 row.classList.add('sel');
                 selectedId = res.id;
@@ -233,193 +204,55 @@ async function loadResidents() {
     } catch (e) {
         document.getElementById('res-list').innerHTML =
             `<div style="color:#ef4444;font-size:0.82rem;padding:8px">
-                Failed to reach GCP: ${e.message}<br>
-                <small style="color:var(--muted)">Check internet connection. Backend: ${GCP}</small>
+                Failed to connect to GCP: ${e.message}
              </div>`;
     }
 }
 
-// ── Log a line to the stream box ─────────────────────────────
-function addLog(agent, msg) {
-    const box = document.getElementById('log-box');
-    const now = new Date().toLocaleTimeString('en-GB');
-    const key = (agent || 'SYSTEM').toUpperCase().replace(/ /g, '_');
-    const div = document.createElement('div');
-    div.className = 'll';
-    div.innerHTML = `<span class="lt">${now}</span><span class="la ${key}">${key}</span><span class="lm">${msg}</span>`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-}
-
-// ── Main health check flow ────────────────────────────────────
+// ── Trigger GCP Health Check ────────────────────────────────
 async function runCheck() {
     if (!selectedId || running) return;
     running = true;
 
-    // UI setup
-    const btn    = document.getElementById('tbtn');
-    const lbl    = document.getElementById('blabel');
-    const hint   = document.getElementById('thint');
-    const logCard = document.getElementById('log-card');
-    const logBox  = document.getElementById('log-box');
-    const pbar   = document.getElementById('pbar');
-    const result = document.getElementById('result-wrap');
-    const stat   = document.getElementById('agent-stat');
+    const btn = document.getElementById('tbtn');
+    const lbl = document.getElementById('blabel');
+    const sbox = document.getElementById('sbox');
+    const stitle = document.getElementById('stitle');
+    const sdesc = document.getElementById('sdesc');
 
     btn.classList.add('running');
     btn.disabled = true;
     lbl.textContent = 'Running...';
-    hint.textContent = 'GCP agents are executing. The main dashboard is updating live.';
-    logCard.style.display = 'flex';
-    logCard.style.flexDirection = 'column';
-    logBox.innerHTML = '';
-    result.innerHTML = '';
-    pbar.style.width = '5%';
-    stat.textContent = '';
-
-    const agentOrder = ['SENSORY_GUARDIAN', 'MEDICAL_COMPLIANCE', 'COGNITIVE_COMPANION', 'CARE_COORDINATOR'];
-    const agentsSeen = new Set();
-
-    addLog('SYSTEM', `Preparing health check for resident: ${selectedId}...`);
-    pbar.style.width = '5%';
-
-    // ── STEP 1: Subscribe to /check/broadcast FIRST ────────────────
-    addLog('SYSTEM', `Subscribing to broadcast channel (Firestore Sync)...`);
     
-    await new Promise(resolve => {
-        let resolved = false;
-
-        function done() {
-            if (resolved) return;
-            resolved = true;
-            resolve();
-        }
-
-        const src = new EventSource(`${GCP}/api/residents/${selectedId}/check/broadcast`);
-
-        src.onmessage = function(e) {
-            let ev;
-            try { ev = JSON.parse(e.data); } catch { return; }
-
-            const evType = ev.event_type || '';
-            const agent  = (ev.agent || 'SYSTEM').toUpperCase().replace(/ /g, '_');
-            const msg    = ev.message || '';
-
-            // Connection handshake
-            if (evType === 'BROADCAST_CONNECTED') {
-                addLog('SYSTEM', msg);
-                // Step 2: Now that we are listening, fire the trigger!
-                fireTrigger();
-                return;
-            }
-
-            addLog(agent, msg);
-
-            if (agentOrder.includes(agent)) {
-                agentsSeen.add(agent);
-                const n = agentOrder.filter(a => agentsSeen.has(a)).length;
-                pbar.style.width = `${Math.min(15 + n * 18, 88)}%`;
-                stat.textContent = `${agentsSeen.size}/4 agents`;
-            }
-
-            if (evType === 'COMPLETE') {
-                pbar.style.width = '100%';
-                src.close();
-                done();
-            }
-        };
-
-        src.onerror = function() {
-            src.close();
-            addLog('SYSTEM', 'Broadcast stream ended or interrupted.');
-            done();
-        };
-
-        // Fire the actual POST request
-        function fireTrigger() {
-            addLog('SYSTEM', `POST ${GCP}/api/residents/${selectedId}/check/trigger`);
-            // We DO NOT await this here, because it blocks for 90 seconds.
-            // The Cloud Run server stays active because the connection is open.
-            fetch(`${GCP}/api/residents/${selectedId}/check/trigger`, { method: 'POST' })
-                .then(r => {
-                    if (r.status === 504) {
-                        addLog('SYSTEM', 'Gateway timeout (this is normal for long Cloud Run requests).');
-                    }
-                })
-                .catch(e => {
-                    addLog('SYSTEM', `Trigger disconnected: ${e.message}`);
-                });
-        }
-        
-        // Safety timeout
-        setTimeout(() => {
-            src.close();
-            done();
-        }, 180000);
-    });
-
-    // ── STEP 3: Fetch final result from Firestore ─────────────
-    // /api/alerts is backed by Firestore — always accurate regardless
-    // of which Cloud Run instance handled the request.
-    pbar.style.width = '100%';
-    addLog('SYSTEM', 'Fetching result from Firestore...');
-
-    await new Promise(r => setTimeout(r, 1500)); // brief pause for Firestore write to propagate
+    sbox.style.display = 'block';
+    stitle.textContent = '⚡ AI Agents Running on GCP...';
+    sdesc.innerHTML = 'Look at your <strong>main desktop screen</strong> right now!<br>The Sensory Guardian, Medical Compliance, Cognitive Companion, and Care Coordinator are streaming live.';
 
     try {
-        const ar = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(10000) });
-        if (!ar.ok) throw new Error('HTTP ' + ar.status);
-        const allAlerts = await ar.json();
+        // Send POST to GCP. This keeps the server CPU active while agents execute.
+        const res = await fetch(`${GCP}/api/residents/${selectedId}/check/trigger`, { 
+            method: 'POST',
+            signal: AbortSignal.timeout(180000) // 3 min safety window for GCP run
+        });
 
-        const latest = (allAlerts || [])
-            .filter(a => a.resident_id === selectedId)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-
-        if (latest) {
-            const clsMap = { CRITICAL: 'crit', WARNING: 'warn', ADVISORY: 'warn', INFO: 'safe' };
-            const iconMap = { CRITICAL: '🔴', WARNING: '🟡', ADVISORY: '🔵', INFO: '🟢' };
-            const cls  = clsMap[latest.severity] || 'safe';
-            const icon = iconMap[latest.severity] || '🟢';
-            const acts = Array.isArray(latest.actions) ? latest.actions : [];
-
-            result.innerHTML = `
-                <div class="result-card ${cls}">
-                    <div class="rt">${icon} Consensus: ${latest.severity}</div>
-                    <div class="rm">${latest.message || 'Health check complete.'}</div>
-                    ${acts.length ? `<div class="acts">${acts.map(a => `<span class="act">${a.trim()}</span>`).join('')}</div>` : ''}
-                </div>
-                <div class="note">
-                    ✅ Result from Firestore · Family App &amp; EHR updated automatically
-                </div>
-            `;
+        if (res.ok) {
+            stitle.textContent = '✅ Health Check Completed!';
+            sdesc.innerHTML = 'All 4 AI agents finished executing.<br>The main desktop dashboard, Family App, and EHR Gateway have all been updated.';
         } else {
-            result.innerHTML = `
-                <div class="result-card safe">
-                    <div class="rt">✅ All Clear</div>
-                    <div class="rm">No clinical anomalies detected for this resident.</div>
-                </div>`;
+            stitle.textContent = '⚠️ Check Triggered';
+            sdesc.innerHTML = `Request sent to GCP (HTTP ${res.status}). Check main dashboard.`;
         }
     } catch (e) {
-        result.innerHTML = `
-            <div class="result-card safe">
-                <div class="rt">✅ Check Complete</div>
-                <div class="rm">Agents finished on GCP. Open the Family App or EHR to see results.</div>
-            </div>`;
+        stitle.textContent = '✅ Trigger Sent';
+        sdesc.innerHTML = 'The health check request was dispatched to GCP.<br>Check your main desktop screen for live updates.';
+    } finally {
+        btn.classList.remove('running');
+        btn.disabled = false;
+        lbl.textContent = 'Run Check';
+        running = false;
     }
-
-    hint.textContent = 'Done. Family App and EHR Gateway updated automatically via Firestore.';
-    resetBtn();
 }
 
-function resetBtn() {
-    const btn = document.getElementById('tbtn');
-    btn.classList.remove('running');
-    btn.disabled = false;
-    document.getElementById('blabel').textContent = 'Run Check';
-    running = false;
-}
-
-// ── Init ──────────────────────────────────────────────────────
 checkConn();
 loadResidents();
 setInterval(checkConn, 15000);

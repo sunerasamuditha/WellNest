@@ -170,10 +170,7 @@ async def trigger_broadcast_check(resident_id: str):
     We await the execution here to hold the HTTP connection open, which prevents 
     Cloud Run from throttling the CPU while the background agents run.
     """
-    if check_running.get(resident_id):
-        return {"status": "already_running", "message": "A health check is already in progress for this resident."}
-
-    check_running[resident_id] = True
+    # Always clear traces to guarantee a clean slate for the real-time broadcast
     clear_trace_events_db(resident_id)
 
     session_id = f"broadcast_{uuid.uuid4().hex[:8]}"
@@ -197,7 +194,6 @@ async def trigger_broadcast_check(resident_id: str):
         listener(err_event)
     finally:
         set_vitals_frozen(resident_id, False)
-        check_running[resident_id] = False
         # Sentinel to end the stream for broadcast listeners
         done_event = {"agent": "ORCHESTRATOR", "event_type": "COMPLETE", "message": "Done."}
         listener(done_event)
