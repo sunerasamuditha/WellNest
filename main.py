@@ -368,6 +368,9 @@ def generate_report(req: ReportRequest):
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 os.makedirs(STATIC_DIR, exist_ok=True)
 
+from hw_trigger import router as hw_router
+app.include_router(hw_router)
+
 @app.get("/trigger", response_class=FileResponse)
 def serve_trigger():
     return FileResponse(os.path.join(STATIC_DIR, "trigger.html"))
