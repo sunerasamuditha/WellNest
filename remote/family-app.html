@@ -271,7 +271,7 @@
 
 <script>
 /* ── CONFIG ── */
-const GCP = 'https://wellnest-a2a-28869653773.us-central1.run.app';
+const GCP = (window.location.protocol.startsWith('http')) ? window.location.origin : 'https://wellnest-a2a-28869653773.us-central1.run.app';
 let activeResident = 'sriyani_001';
 let residents = [];
 let profile = null;
@@ -281,13 +281,49 @@ let currentView = 'alerts';
 let guardianProfile = JSON.parse(localStorage.getItem('wellnest_guardian_profile') || 'null');
 if (guardianProfile?.residentId) activeResident = guardianProfile.residentId;
 
+let eventSource = null;
+function subscribeToSSE(residentId) {
+    if (!residentId) return;
+    if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+    }
+    const sseUrl = `${GCP}/api/residents/${residentId}/check/broadcast`;
+    eventSource = new EventSource(sseUrl);
+
+    eventSource.onopen = () => {
+        const dot = document.getElementById('cdot');
+        const txt = document.getElementById('ctext');
+        if (dot) dot.classList.add('live');
+        if (txt) txt.textContent = 'Live';
+    };
+
+    eventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            const txt = document.getElementById('ctext');
+            if (data.event_type === 'ALERT' || data.event_type === 'COMPLETE') {
+                loadAll();
+                if (txt) txt.textContent = 'Live';
+            } else if (data.event_type && data.event_type !== 'BROADCAST_CONNECTED') {
+                if (txt) txt.textContent = 'AI Check Running...';
+            }
+        } catch (e) {}
+    };
+
+    eventSource.onerror = () => {
+        const txt = document.getElementById('ctext');
+        if (txt) txt.textContent = 'Offline';
+    };
+}
+
 /* ── CONNECTION CHECK ── */
 async function checkConn() {
     const dot = document.getElementById('cdot');
     const txt = document.getElementById('ctext');
     try {
         const r = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(5000) });
-        if (r.ok) { dot.classList.add('live'); txt.textContent = 'Live'; }
+        if (r.ok) { dot.classList.add('live'); if (txt.textContent !== 'AI Check Running...') txt.textContent = 'Live'; }
         else throw 0;
     } catch { dot.classList.remove('live'); txt.textContent = 'Offline'; }
 }
@@ -312,9 +348,11 @@ async function loadResidents() {
                 chip.classList.add('active');
                 activeResident = res.id;
                 loadAll();
+                subscribeToSSE(activeResident);
             };
             strip.appendChild(chip);
         });
+        subscribeToSSE(activeResident);
     } catch(e) {}
 }
 

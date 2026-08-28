@@ -374,6 +374,7 @@ def generate_report(req: ReportRequest):
 
 # Serve High-Fidelity UI Static Files
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+REMOTE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "remote")
 os.makedirs(STATIC_DIR, exist_ok=True)
 
 from hw_trigger import router as hw_router
@@ -382,6 +383,14 @@ app.include_router(hw_router)
 @app.get("/trigger", response_class=FileResponse)
 def serve_trigger():
     return FileResponse(os.path.join(STATIC_DIR, "trigger.html"))
+
+@app.get("/family", response_class=FileResponse)
+def serve_family_app():
+    return FileResponse(os.path.join(REMOTE_DIR, "family-app.html"))
+
+@app.get("/ehr", response_class=FileResponse)
+def serve_ehr_gateway():
+    return FileResponse(os.path.join(REMOTE_DIR, "ehr-gateway.html"))
 
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 

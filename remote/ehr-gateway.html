@@ -557,10 +557,46 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const GCP = 'https://wellnest-a2a-28869653773.us-central1.run.app';
+const GCP = (window.location.protocol.startsWith('http')) ? window.location.origin : 'https://wellnest-a2a-28869653773.us-central1.run.app';
 let selectedId = null;
 let residents = [];
 let showJson = false;
+
+let ehrEventSource = null;
+function subscribeToSSE(residentId) {
+    if (!residentId) return;
+    if (ehrEventSource) {
+        ehrEventSource.close();
+        ehrEventSource = null;
+    }
+    const sseUrl = `${GCP}/api/residents/${residentId}/check/broadcast`;
+    ehrEventSource = new EventSource(sseUrl);
+
+    ehrEventSource.onopen = () => {
+        const dot = document.getElementById('cdot');
+        const txt = document.getElementById('ctext');
+        if (dot) dot.classList.add('live');
+        if (txt) txt.textContent = 'Firestore live';
+    };
+
+    ehrEventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            const txt = document.getElementById('ctext');
+            if (data.event_type === 'ALERT' || data.event_type === 'COMPLETE') {
+                loadData();
+                if (txt) txt.textContent = 'Firestore live';
+            } else if (data.event_type && data.event_type !== 'BROADCAST_CONNECTED') {
+                if (txt) txt.textContent = 'AI Check Running...';
+            }
+        } catch (e) {}
+    };
+
+    ehrEventSource.onerror = () => {
+        const txt = document.getElementById('ctext');
+        if (txt) txt.textContent = 'Offline';
+    };
+}
 
 const PROFILE_KEY = 'wellnestDoctorProfileV1';
 const REGISTRATION_DISMISSED_KEY = 'wellnestDoctorRegistrationDismissedV1';
@@ -677,7 +713,7 @@ async function checkConn() {
     const txt = document.getElementById('ctext');
     try {
         const r = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(5000) });
-        if (r.ok) { dot.classList.add('live'); txt.textContent = 'Firestore live'; }
+        if (r.ok) { dot.classList.add('live'); if (txt.textContent !== 'AI Check Running...') txt.textContent = 'Firestore live'; }
         else throw 0;
     } catch { dot.classList.remove('live'); txt.textContent = 'Offline'; }
 }
@@ -699,11 +735,13 @@ async function loadResidents() {
                 t.classList.add('active');
                 selectedId = res.id;
                 loadData();
+                subscribeToSSE(selectedId);
             };
             if (i === 0) selectedId = res.id;
             bar.appendChild(t);
         });
         await loadData();
+        subscribeToSSE(selectedId);
     } catch(e) {
         document.getElementById('tab-bar').innerHTML = '<div style="color:var(--critical);font-size:.75rem;padding:8px 2px">Failed to load from GCP</div>';
     }
