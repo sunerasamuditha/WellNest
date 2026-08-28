@@ -2,177 +2,559 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WellNest | Physician EHR Gateway</title>
-    <meta name="description" content="WellNest Physician EHR — FHIR observations, medication records and clinical AI alerts.">
+    <meta name="description" content="WellNest Physician EHR — a calm, clinician-first view of FHIR observations, medication records and clinical alerts.">
+    <meta name="theme-color" content="#123f31">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy: #0f2d5e;
-            --blue: #1d4ed8;
-            --blue-lt: #3b82f6;
-            --green: #059669;
-            --amber: #d97706;
-            --red: #dc2626;
-            --cyan: #0891b2;
-            --bg: #f8fafc;
-            --surf: #ffffff;
-            --bord: #e2e8f0;
-            --text: #0f172a;
-            --muted: #64748b;
-            --shadow: 0 1px 12px rgba(15,45,94,.07);
+            --forest-950: #08281f;
+            --forest-900: #103d30;
+            --forest-800: #17513e;
+            --forest-700: #25664e;
+            --forest-600: #347b5e;
+            --sage-500: #78a984;
+            --sage-300: #aed0b4;
+            --sage-100: #e2f0e5;
+            --sage-50: #f1f7f2;
+            --canvas: #f4f8f5;
+            --surface: #ffffff;
+            --surface-soft: #f8fbf9;
+            --line: #dce8df;
+            --text: #173229;
+            --muted: #698078;
+            --critical: #b93845;
+            --critical-soft: #fff0f1;
+            --warning: #a16617;
+            --warning-soft: #fff8e9;
+            --info: #37725d;
+            --info-soft: #edf7f0;
+            --shadow-sm: 0 8px 24px rgba(15, 61, 47, .07);
+            --shadow-lg: 0 30px 80px rgba(8, 40, 31, .20);
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 22px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
 
-        /* ── HEADER ── */
-        .hdr { background: var(--navy); padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 14px rgba(15,45,94,.35); }
-        .hdr-brand { display: flex; align-items: center; gap: 10px; }
-        .hdr-icon { width: 36px; height: 36px; background: rgba(255,255,255,.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .hdr-title { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 700; color: white; }
-        .hdr-sub { font-size: 0.65rem; color: rgba(255,255,255,.65); }
-        .conn-pill { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 5px 11px; font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,.85); }
-        .cdot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.3); }
-        .cdot.live { background: #34d399; animation: blink 2s infinite; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            background: var(--canvas);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        body.no-scroll { overflow: hidden; }
+        button, input, select, textarea { font: inherit; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 3px solid rgba(120, 169, 132, .42);
+            outline-offset: 2px;
+        }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .icon { width: 19px; height: 19px; flex: 0 0 auto; }
 
-        /* ── PATIENT TAB BAR ── */
-        .tab-bar { background: var(--surf); border-bottom: 2px solid var(--bord); padding: 10px 14px; display: flex; gap: 8px; overflow-x: auto; }
-        .ptab { flex-shrink: 0; padding: 7px 16px; border-radius: 8px; border: 2px solid var(--bord); background: var(--bg); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all .2s; color: var(--muted); white-space: nowrap; }
-        .ptab:hover { border-color: var(--blue-lt); color: var(--blue); }
-        .ptab.on { border-color: var(--navy); background: var(--navy); color: white; }
+        /* PRELOADER */
+        .preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(circle at 50% 40%, rgba(174, 208, 180, .28), transparent 31%),
+                linear-gradient(145deg, #f8fcf9 0%, #e9f3eb 100%);
+            transition: opacity .55s ease, visibility .55s ease;
+        }
+        .preloader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-inner { width: min(82vw, 280px); text-align: center; }
+        .loader-mark { width: 132px; height: 132px; margin: 0 auto 22px; position: relative; display: grid; place-items: center; }
+        .loader-mark::before, .loader-mark::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(37, 102, 78, .18);
+        }
+        .loader-mark::before { inset: 0; border-top-color: var(--forest-700); animation: loaderSpin 2.1s linear infinite; }
+        .loader-mark::after { inset: 9px; border-right-color: var(--sage-500); animation: loaderSpin 1.55s linear infinite reverse; }
+        .loader-logo { width: 92px; height: 92px; object-fit: contain; filter: drop-shadow(0 10px 17px rgba(15, 61, 47, .13)); }
+        .loader-title { font-family: 'Manrope', sans-serif; font-weight: 800; letter-spacing: .16em; color: var(--forest-900); font-size: .95rem; }
+        .loader-copy { color: var(--muted); font-size: .78rem; margin-top: 7px; }
+        .loader-track { height: 3px; margin-top: 20px; overflow: hidden; border-radius: 99px; background: rgba(37, 102, 78, .10); }
+        .loader-bar { width: 46%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--sage-500), var(--forest-700)); animation: loaderProgress 1.25s ease-in-out infinite; }
+        @keyframes loaderSpin { to { transform: rotate(360deg); } }
+        @keyframes loaderProgress { 0% { transform: translateX(-115%); } 100% { transform: translateX(250%); } }
 
-        /* ── BODY ── */
-        .body { flex: 1; overflow-y: auto; padding: 14px 14px 84px; display: flex; flex-direction: column; gap: 12px; }
+        /* APPLICATION SHELL */
+        .app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); }
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 248px;
+            z-index: 80;
+            background: linear-gradient(180deg, var(--forest-950), var(--forest-900));
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 18px 20px;
+            overflow-y: auto;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; padding: 0 6px; }
+        .brand-logo { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 5px 10px rgba(0,0,0,.12)); }
+        .brand-name { font-family: 'Manrope', sans-serif; font-size: 1.08rem; font-weight: 800; letter-spacing: .12em; }
+        .brand-sub { display: block; margin-top: 2px; color: rgba(255,255,255,.58); font-size: .64rem; letter-spacing: .04em; }
+        .side-label { margin: 34px 10px 10px; color: rgba(255,255,255,.42); font-size: .65rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+        .side-nav { display: flex; flex-direction: column; gap: 5px; }
+        .side-link {
+            min-height: 46px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 13px;
+            border-radius: 12px;
+            color: rgba(255,255,255,.68);
+            text-decoration: none;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            text-align: left;
+            font-size: .83rem;
+            font-weight: 600;
+            transition: .2s ease;
+        }
+        .side-link:hover { color: #fff; background: rgba(255,255,255,.07); }
+        .side-link.active { color: #fff; background: rgba(174, 208, 180, .16); box-shadow: inset 3px 0 var(--sage-300); }
+        .side-spacer { flex: 1; min-height: 32px; }
+        .side-profile {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,.10);
+            background: rgba(255,255,255,.06);
+            color: #fff;
+            border-radius: 14px;
+            padding: 11px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .side-profile:hover { background: rgba(255,255,255,.10); }
+        .doctor-avatar { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; background: var(--sage-100); color: var(--forest-900); display: grid; place-items: center; font-family: 'Manrope', sans-serif; font-weight: 800; }
+        .side-profile-copy { min-width: 0; flex: 1; }
+        .side-profile-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .78rem; font-weight: 700; }
+        .side-profile-role { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgba(255,255,255,.52); font-size: .67rem; margin-top: 2px; }
 
-        /* ── PATIENT HDR ── */
-        .phdr { background: var(--surf); border-radius: 14px; border: 1px solid var(--bord); padding: 16px; box-shadow: var(--shadow); display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-        .pav { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--blue-lt)); display: flex; align-items: center; justify-content: center; color: white; font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
-        .pname { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; }
-        .pmeta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-        .mchip { font-size: 0.68rem; padding: 3px 9px; border-radius: 10px; background: #f1f5f9; border: 1px solid var(--bord); color: var(--muted); font-weight: 500; }
-        .risk-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; border: 1px solid; }
-        .risk-LOW      { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
-        .risk-INFO     { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
-        .risk-ADVISORY { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-        .risk-WARNING  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-        .risk-CRITICAL { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .main-shell { grid-column: 2; min-width: 0; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: 76px;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            background: rgba(244, 248, 245, .90);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(220, 232, 223, .78);
+        }
+        .mobile-brand, .menu-btn { display: none; }
+        .page-eyebrow { color: var(--forest-600); font-size: .69rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .page-title { margin-top: 3px; font-family: 'Manrope', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--forest-950); }
+        .top-actions { display: flex; align-items: center; gap: 10px; }
+        .connection-pill { min-height: 36px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); padding: 0 13px; color: var(--muted); font-size: .73rem; font-weight: 700; box-shadow: 0 3px 12px rgba(15,61,47,.04); }
+        .connection-dot { width: 8px; height: 8px; border-radius: 50%; background: #a7b4ae; }
+        .connection-dot.live { background: #4e9b6a; box-shadow: 0 0 0 4px rgba(78,155,106,.13); animation: breathe 2s ease-in-out infinite; }
+        @keyframes breathe { 50% { box-shadow: 0 0 0 7px rgba(78,155,106,.05); } }
+        .profile-quick {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--surface);
+            min-height: 42px;
+            padding: 4px 10px 4px 5px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            cursor: pointer;
+            color: var(--text);
+        }
+        .profile-quick .doctor-avatar { width: 32px; height: 32px; border-radius: 9px; font-size: .72rem; }
+        .profile-quick-copy { text-align: left; max-width: 150px; }
+        .profile-quick-name { display: block; font-size: .75rem; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .profile-quick-role { display: block; margin-top: 1px; color: var(--muted); font-size: .62rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-        /* ── CARD ── */
-        .card { background: var(--surf); border-radius: 14px; border: 1px solid var(--bord); padding: 16px; box-shadow: var(--shadow); }
-        .card-hdr { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
-        .card-hdr h3 { font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; }
-        .badge { font-size: 0.62rem; padding: 2px 8px; border-radius: 8px; background: #dbeafe; color: var(--blue); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-        .badge.red { background: #fee2e2; color: var(--red); }
+        .patient-strip { padding: 16px 30px 0; }
+        .patient-strip-inner { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: thin; padding: 2px 2px 8px; }
+        .patient-tab {
+            flex: 0 0 auto;
+            min-height: 38px;
+            padding: 0 15px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--muted);
+            font-size: .75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .18s ease;
+        }
+        .patient-tab:hover { border-color: var(--sage-500); color: var(--forest-700); }
+        .patient-tab.active { border-color: var(--forest-700); background: var(--forest-700); color: #fff; box-shadow: 0 5px 15px rgba(37,102,78,.18); }
 
-        /* ── FHIR OBSERVATIONS ── */
-        .obs-list { display: flex; flex-direction: column; gap: 8px; }
-        .obs-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg); border-radius: 8px; border: 1px solid var(--bord); }
-        .obs-lbl { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
-        .obs-right { display: flex; align-items: center; gap: 8px; }
-        .obs-val { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700; color: var(--navy); }
-        .obs-unit { font-size: 0.65rem; color: var(--muted); }
-        .obs-pill { font-size: 0.62rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
-        .obs-normal   { background: #d1fae5; color: #065f46; }
-        .obs-elevated { background: #fee2e2; color: #991b1b; }
-        .obs-low      { background: #fef3c7; color: #92400e; }
+        .content { padding: 14px 30px 48px; display: flex; flex-direction: column; gap: 16px; }
+        .surface { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+        .patient-hero { padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; position: relative; overflow: hidden; }
+        .patient-hero::after { content: ''; position: absolute; width: 190px; height: 190px; border-radius: 50%; right: -90px; top: -105px; background: radial-gradient(circle, rgba(174,208,180,.30), transparent 68%); pointer-events: none; }
+        .patient-identity { display: flex; align-items: center; gap: 13px; min-width: 0; }
+        .patient-avatar { width: 52px; height: 52px; flex: 0 0 auto; border-radius: 15px; display: grid; place-items: center; background: linear-gradient(145deg, var(--forest-800), var(--forest-600)); color: #fff; font-family: 'Manrope', sans-serif; font-size: 1.1rem; font-weight: 800; }
+        .patient-name { font-family: 'Manrope', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--forest-950); }
+        .patient-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+        .meta-chip { padding: 4px 9px; border-radius: 99px; background: var(--sage-50); color: var(--muted); border: 1px solid var(--line); font-size: .65rem; font-weight: 600; }
+        .risk { position: relative; z-index: 1; padding: 6px 11px; border-radius: 99px; border: 1px solid; font-size: .68rem; font-weight: 800; letter-spacing: .03em; }
+        .risk-LOW, .risk-INFO { color: var(--forest-700); background: var(--info-soft); border-color: #cfe5d6; }
+        .risk-ADVISORY { color: #2f6554; background: #eef7f2; border-color: #cde2d4; }
+        .risk-WARNING { color: var(--warning); background: var(--warning-soft); border-color: #f1d69d; }
+        .risk-CRITICAL { color: var(--critical); background: var(--critical-soft); border-color: #f1c7cc; }
 
-        /* ── GRID 2 ── */
-        .g2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media(min-width:580px) { .g2 { grid-template-columns: 1fr 1fr; } }
+        .panel { padding: 18px; }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+        .panel-title-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .panel-icon { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; display: grid; place-items: center; background: var(--sage-100); color: var(--forest-700); }
+        .panel-title { font-family: 'Manrope', sans-serif; color: var(--forest-950); font-size: .88rem; font-weight: 800; }
+        .panel-caption { margin-top: 2px; color: var(--muted); font-size: .64rem; }
+        .tag { padding: 4px 8px; border-radius: 7px; background: var(--sage-100); color: var(--forest-700); font-family: 'JetBrains Mono', monospace; font-size: .6rem; font-weight: 700; }
+        .tag.urgent { background: var(--critical-soft); color: var(--critical); }
+        .text-btn { border: 0; background: transparent; color: var(--forest-700); font-size: .7rem; font-weight: 700; cursor: pointer; }
 
-        /* ── MED TABLE ── */
-        .med-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-        .med-table th { text-align: left; padding: 7px 9px; color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--bord); font-size: 0.68rem; text-transform: uppercase; }
-        .med-table td { padding: 9px 9px; border-bottom: 1px solid var(--bord); }
-        .med-table tr:last-child td { border-bottom: none; }
-        .med-name { font-weight: 600; color: var(--navy); }
-        .med-sub  { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
-        .med-route { font-size: 0.65rem; padding: 2px 7px; border-radius: 8px; background: #eff6ff; color: var(--blue); font-weight: 600; }
+        .observations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+        .observation { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .observation-label { color: var(--muted); font-size: .72rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+        .observation-value-wrap { text-align: right; flex: 0 0 auto; }
+        .observation-value { font-family: 'JetBrains Mono', monospace; color: var(--forest-900); font-size: .77rem; font-weight: 700; }
+        .observation-unit { color: var(--muted); font-size: .58rem; }
+        .observation-status { display: inline-block; margin-top: 4px; font-size: .58rem; font-weight: 700; }
+        .status-normal { color: var(--forest-600); }
+        .status-elevated { color: var(--critical); }
+        .status-low { color: var(--warning); }
+        .dashboard-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
 
-        /* ── ALERT CARDS ── */
-        .inbox { display: flex; flex-direction: column; gap: 9px; }
-        .icard { padding: 12px; background: var(--bg); border-radius: 10px; border: 1px solid var(--bord); border-left: 4px solid var(--blue-lt); }
-        .icard.CRITICAL { border-left-color: var(--red); background: #fff5f5; }
-        .icard.WARNING  { border-left-color: var(--amber); background: #fffbeb; }
-        .icard.ADVISORY { border-left-color: var(--blue-lt); background: #eff6ff; }
-        .icard.INFO     { border-left-color: var(--green); background: #f0fdf4; }
-        .itop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-        .isev { font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
-        .CRITICAL .isev { background: #fee2e2; color: var(--red); }
-        .WARNING  .isev { background: #fef3c7; color: #92400e; }
-        .ADVISORY .isev { background: #dbeafe; color: #1e40af; }
-        .INFO     .isev { background: #d1fae5; color: #065f46; }
-        .itime { font-size: 0.65rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-        .imsg { font-size: 0.82rem; line-height: 1.55; }
-        .icorr { font-size: 0.72rem; color: var(--muted); margin-top: 6px; padding: 7px; background: white; border-radius: 6px; border: 1px solid var(--bord); }
-        .iacts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
-        .iact { font-size: 0.65rem; padding: 3px 7px; border-radius: 8px; background: #f1f5f9; color: var(--muted); font-weight: 500; border: 1px solid var(--bord); }
+        .med-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+        .med-table th { padding: 7px 8px; text-align: left; color: var(--muted); border-bottom: 1px solid var(--line); font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; }
+        .med-table td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+        .med-table tr:last-child td { border-bottom: 0; }
+        .medicine-name { color: var(--forest-900); font-weight: 700; }
+        .medicine-sub { margin-top: 2px; color: var(--muted); font-size: .62rem; }
+        .medicine-route { display: inline-block; padding: 3px 7px; border-radius: 7px; background: var(--sage-50); color: var(--forest-700); font-size: .61rem; font-weight: 700; }
+        .alert-list { display: flex; flex-direction: column; gap: 9px; }
+        .alert-card { padding: 12px 13px; border-radius: 11px; border: 1px solid var(--line); border-left: 3px solid var(--sage-500); background: var(--surface-soft); }
+        .alert-card.CRITICAL { border-left-color: var(--critical); background: var(--critical-soft); }
+        .alert-card.WARNING { border-left-color: var(--warning); background: var(--warning-soft); }
+        .alert-card.ADVISORY, .alert-card.INFO { border-left-color: var(--forest-600); background: var(--info-soft); }
+        .alert-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+        .severity { font-size: .58rem; font-weight: 800; letter-spacing: .04em; }
+        .CRITICAL .severity { color: var(--critical); }
+        .WARNING .severity { color: var(--warning); }
+        .ADVISORY .severity, .INFO .severity { color: var(--forest-700); }
+        .alert-time { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: .58rem; }
+        .alert-message { font-size: .74rem; line-height: 1.55; }
+        .correlation { margin-top: 7px; padding: 7px 9px; border-radius: 8px; background: rgba(255,255,255,.65); color: var(--muted); font-size: .65rem; }
+        .alert-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+        .alert-action { padding: 3px 7px; border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,.60); color: var(--muted); font-size: .59rem; font-weight: 600; }
+        .json-box { display: none; margin-top: 12px; max-height: 240px; overflow: auto; padding: 14px; border-radius: 12px; background: var(--forest-950); color: #b8d0c3; font: .64rem/1.65 'JetBrains Mono', monospace; }
+        .json-key { color: #a7d6b3; }
+        .json-string { color: #e4c985; }
+        .json-number { color: #b7d7ca; }
+        .empty-state { padding: 28px 18px; border: 1px dashed #c9dace; border-radius: 12px; background: var(--surface-soft); text-align: center; color: var(--muted); font-size: .75rem; }
+        .empty-icon { width: 36px; height: 36px; display: grid; place-items: center; margin: 0 auto 8px; border-radius: 10px; background: var(--sage-100); color: var(--forest-700); }
+        .data-footnote { padding: 3px 0; text-align: center; color: var(--muted); font-size: .64rem; line-height: 1.55; }
+        .data-footnote code { color: var(--forest-700); font: .61rem 'JetBrains Mono', monospace; }
+        .spin { display: inline-block; animation: loaderSpin 1s linear infinite; }
 
-        /* ── FHIR JSON ── */
-        .json-box { background: #0f172a; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; border-radius: 8px; padding: 12px; overflow-x: auto; max-height: 200px; overflow-y: auto; line-height: 1.6; margin-top: 10px; display: none; }
-        .jk { color: #93c5fd; }
-        .js { color: #86efac; }
-        .jn { color: #fbbf24; }
-        .toggle-json { background: none; border: none; color: var(--blue-lt); font-size: 0.72rem; cursor: pointer; font-weight: 600; margin-left: auto; }
+        /* PROFILE DRAWER + REGISTRATION */
+        .overlay { position: fixed; inset: 0; z-index: 180; background: rgba(8,40,31,.52); opacity: 0; visibility: hidden; transition: .25s ease; backdrop-filter: blur(4px); }
+        .overlay.open { opacity: 1; visibility: visible; }
+        .profile-drawer { position: fixed; z-index: 190; top: 0; right: 0; width: min(100%, 620px); height: 100dvh; background: var(--surface); transform: translateX(104%); transition: transform .32s cubic-bezier(.22,.8,.23,1); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+        .profile-drawer.open { transform: translateX(0); }
+        .drawer-header { flex: 0 0 auto; padding: 22px 24px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+        .drawer-title { font-family: 'Manrope', sans-serif; color: var(--forest-950); font-size: 1.06rem; font-weight: 800; }
+        .drawer-copy { margin-top: 4px; color: var(--muted); font-size: .7rem; }
+        .icon-btn { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--forest-700); display: grid; place-items: center; cursor: pointer; }
+        .drawer-body { overflow-y: auto; padding: 22px 24px 30px; }
+        .profile-photo-row { display: flex; align-items: center; gap: 15px; padding: 14px; background: var(--sage-50); border-radius: 14px; margin-bottom: 20px; }
+        .profile-photo-row .doctor-avatar { width: 64px; height: 64px; border-radius: 17px; font-size: 1rem; }
+        .photo-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+        .profile-section { padding: 18px 0; border-top: 1px solid var(--line); }
+        .profile-section:first-of-type { border-top: 0; padding-top: 0; }
+        .section-heading { font-family: 'Manrope', sans-serif; color: var(--forest-900); font-size: .8rem; font-weight: 800; margin-bottom: 12px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+        .field.full { grid-column: 1 / -1; }
+        .field label { display: block; margin-bottom: 6px; color: var(--text); font-size: .67rem; font-weight: 700; }
+        .field-note { color: var(--muted); font-size: .59rem; margin-top: 4px; line-height: 1.4; }
+        .control { width: 100%; min-height: 42px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); padding: 9px 11px; font-size: .75rem; transition: .15s ease; }
+        .control:hover { border-color: var(--sage-500); }
+        textarea.control { min-height: 92px; resize: vertical; line-height: 1.5; }
+        .check-row { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; color: var(--text); font-size: .7rem; }
+        .check-row input { margin-top: 2px; accent-color: var(--forest-700); }
+        .btn { min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--forest-700); cursor: pointer; font-size: .72rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+        .btn:hover { border-color: var(--sage-500); background: var(--sage-50); }
+        .btn-primary { color: #fff; border-color: var(--forest-700); background: var(--forest-700); box-shadow: 0 6px 16px rgba(37,102,78,.16); }
+        .btn-primary:hover { background: var(--forest-800); border-color: var(--forest-800); }
+        .btn-danger { color: var(--critical); }
+        .drawer-actions { position: sticky; bottom: -30px; margin: 18px -24px -30px; padding: 14px 24px; border-top: 1px solid var(--line); background: rgba(255,255,255,.94); backdrop-filter: blur(10px); display: flex; justify-content: space-between; gap: 10px; }
+        .action-group { display: flex; gap: 8px; }
+        .save-state { min-height: 18px; margin-top: 10px; color: var(--forest-600); font-size: .65rem; text-align: right; }
 
-        /* ── EMPTY ── */
-        .empty { text-align: center; padding: 24px; color: var(--muted); background: var(--bg); border-radius: 8px; border: 1px dashed var(--bord); font-size: 0.82rem; }
+        .registration-modal { position: fixed; z-index: 220; inset: 50% auto auto 50%; transform: translate(-50%, -46%) scale(.98); width: min(calc(100% - 28px), 720px); max-height: calc(100dvh - 36px); overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow-lg); opacity: 0; visibility: hidden; transition: .25s ease; }
+        .registration-modal.open { transform: translate(-50%, -50%) scale(1); opacity: 1; visibility: visible; }
+        .registration-head { min-height: 158px; padding: 24px; display: flex; align-items: center; gap: 20px; color: #fff; background: linear-gradient(135deg, var(--forest-950), var(--forest-700)); position: relative; overflow: hidden; }
+        .registration-head::after { content: ''; position: absolute; width: 230px; height: 230px; right: -90px; top: -120px; border-radius: 50%; background: rgba(174,208,180,.10); }
+        .registration-logo { width: 92px; height: 92px; object-fit: contain; flex: 0 0 auto; position: relative; z-index: 1; }
+        .registration-title { font: 800 1.3rem 'Manrope', sans-serif; position: relative; z-index: 1; }
+        .registration-copy { max-width: 430px; margin-top: 7px; color: rgba(255,255,255,.70); font-size: .75rem; line-height: 1.5; position: relative; z-index: 1; }
+        .registration-body { padding: 22px 24px 24px; }
+        .privacy-note { margin-bottom: 16px; padding: 10px 12px; border-radius: 10px; background: var(--sage-50); color: var(--muted); font-size: .65rem; line-height: 1.5; }
+        .registration-actions { margin-top: 19px; display: flex; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
+        .form-error { color: var(--critical); font-size: .66rem; margin-top: 9px; min-height: 18px; }
 
-        /* ── BOTTOM NAV ── */
-        .bnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surf); border-top: 1px solid var(--bord); display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 16px rgba(0,0,0,.07); }
-        .ni { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px 12px; gap: 4px; font-size: 0.62rem; font-weight: 600; color: var(--muted); text-decoration: none; border: none; background: none; cursor: pointer; transition: color .15s; }
-        .ni.on, .ni:hover { color: var(--navy); }
+        .toast { position: fixed; z-index: 300; left: 50%; bottom: 26px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; min-width: min(90vw, 310px); padding: 11px 14px; border-radius: 11px; background: var(--forest-950); color: #fff; text-align: center; font-size: .72rem; font-weight: 600; box-shadow: var(--shadow-lg); transition: .25s ease; }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-        .spin { animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 980px) {
+            .app-shell { grid-template-columns: 86px minmax(0, 1fr); }
+            .sidebar { width: 86px; padding-inline: 12px; }
+            .brand { justify-content: center; padding: 0; }
+            .brand-copy, .side-label, .side-link span, .side-profile-copy, .side-profile .chevron { display: none; }
+            .side-nav { margin-top: 30px; }
+            .side-link { justify-content: center; padding: 0; }
+            .side-profile { justify-content: center; padding: 8px; }
+            .main-shell { grid-column: 2; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .app-shell { display: block; }
+            .sidebar { width: min(84vw, 280px); transform: translateX(-104%); transition: transform .28s ease; box-shadow: var(--shadow-lg); }
+            .sidebar.open { transform: translateX(0); }
+            .brand-copy, .side-label, .side-link span, .side-profile-copy, .side-profile .chevron { display: block; }
+            .brand { justify-content: flex-start; padding: 0 6px; }
+            .side-nav { margin-top: 0; }
+            .side-link { justify-content: flex-start; padding: 0 13px; }
+            .side-profile { justify-content: flex-start; padding: 11px; }
+            .main-shell { width: 100%; }
+            .topbar { height: 68px; padding: 0 16px; }
+            .menu-btn { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--forest-700); cursor: pointer; }
+            .topbar-title { display: none; }
+            .mobile-brand { display: flex; align-items: center; gap: 7px; font: 800 .78rem 'Manrope', sans-serif; color: var(--forest-900); letter-spacing: .08em; }
+            .mobile-brand img { width: 32px; height: 32px; object-fit: contain; }
+            .connection-pill { padding: 0 10px; }
+            .connection-pill span { display: none; }
+            .connection-pill .connection-dot { display: block; }
+            .profile-quick-copy, .profile-quick .chevron { display: none; }
+            .profile-quick { padding-right: 5px; }
+            .patient-strip { padding: 12px 14px 0; }
+            .content { padding: 10px 14px 34px; }
+            .observations { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .field.full { grid-column: auto; }
+            .registration-head { align-items: flex-start; padding: 20px; min-height: 140px; }
+            .registration-logo { width: 72px; height: 72px; }
+            .registration-body { padding: 18px; }
+            .drawer-header, .drawer-body { padding-left: 18px; padding-right: 18px; }
+            .drawer-actions { margin-left: -18px; margin-right: -18px; padding-left: 18px; padding-right: 18px; }
+        }
+        @media (max-width: 460px) {
+            .registration-head { gap: 12px; }
+            .registration-logo { width: 58px; height: 58px; }
+            .registration-title { font-size: 1.05rem; }
+            .registration-copy { font-size: .68rem; }
+            .patient-hero { align-items: flex-start; }
+            .risk { margin-left: 65px; }
+            .drawer-actions { align-items: stretch; flex-direction: column-reverse; }
+            .action-group { display: grid; grid-template-columns: 1fr 1fr; }
+            .drawer-actions > .btn { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
     </style>
 </head>
-<body>
-
-<header class="hdr">
-    <div class="hdr-brand">
-        <div class="hdr-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h3M15 15h3"/></svg>
-        </div>
-        <div>
-            <div class="hdr-title">Physician EHR Gateway</div>
-            <div class="hdr-sub">FHIR R4 · Firestore-backed · Live GCP Data</div>
+<body class="no-scroll">
+    <div class="preloader" id="preloader" role="status" aria-live="polite">
+        <div class="loader-inner">
+            <div class="loader-mark"><img class="loader-logo" src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt=""></div>
+            <div class="loader-title">WELLNEST</div>
+            <div class="loader-copy">Preparing your clinical workspace</div>
+            <div class="loader-track" aria-hidden="true"><div class="loader-bar"></div></div>
         </div>
     </div>
-    <div class="conn-pill">
-        <div class="cdot" id="cdot"></div>
-        <span id="ctext">Connecting...</span>
+
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+            <a class="brand" href="ehr-gateway.html" aria-label="WellNest EHR home">
+                <img class="brand-logo" src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt="WellNest">
+                <span class="brand-copy"><span class="brand-name">WELLNEST</span><span class="brand-sub">Clinical care platform</span></span>
+            </a>
+
+            <div class="side-label">Workspace</div>
+            <nav class="side-nav">
+                <a href="ehr-gateway.html" class="side-link active" aria-current="page">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M14 9h4M14 15h4"/></svg>
+                    <span>EHR gateway</span>
+                </a>
+                <button type="button" class="side-link profile-trigger">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/><path d="M19 8v6M16 11h6"/></svg>
+                    <span>Doctor profile</span>
+                </button>
+            </nav>
+
+            <div class="side-spacer"></div>
+            <button type="button" class="side-profile profile-trigger" aria-label="Open doctor profile">
+                <span class="doctor-avatar js-avatar">DR</span>
+                <span class="side-profile-copy">
+                    <span class="side-profile-name js-doctor-name">Set up profile</span>
+                    <span class="side-profile-role js-doctor-role">Doctor account</span>
+                </span>
+                <svg class="icon chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+        </aside>
+
+        <main class="main-shell">
+            <header class="topbar">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <button type="button" class="menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <div class="mobile-brand"><img src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt=""><span>WELLNEST</span></div>
+                    <div class="topbar-title">
+                        <div class="page-eyebrow">Clinical workspace</div>
+                        <h1 class="page-title">Physician EHR Gateway</h1>
+                    </div>
+                </div>
+                <div class="top-actions">
+                    <div class="connection-pill" aria-live="polite">
+                        <span class="connection-dot" id="cdot"></span>
+                        <span id="ctext">Connecting…</span>
+                    </div>
+                    <button type="button" class="profile-quick profile-trigger" aria-label="Open doctor profile">
+                        <span class="doctor-avatar js-avatar">DR</span>
+                        <span class="profile-quick-copy"><span class="profile-quick-name js-doctor-name">Set up profile</span><span class="profile-quick-role js-doctor-role">Doctor account</span></span>
+                        <svg class="icon chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <section class="patient-strip" aria-label="Patient selector">
+                <div class="patient-strip-inner" id="tab-bar">
+                    <div style="color:var(--muted);font-size:.75rem;padding:8px 2px"><span class="spin">◌</span> Loading patients…</div>
+                </div>
+            </section>
+
+            <section class="content" id="body-content" aria-live="polite">
+                <div class="empty-state"><div class="empty-icon"><span class="spin">◌</span></div>Loading clinical data from GCP Firestore…</div>
+            </section>
+        </main>
     </div>
-</header>
 
-<!-- PATIENT TAB BAR -->
-<div class="tab-bar" id="tab-bar">
-    <div style="color:var(--muted);font-size:0.78rem;line-height:2.2"><span class="spin">⏳</span> Loading patients...</div>
-</div>
+    <div class="overlay" id="drawer-overlay"></div>
+    <aside class="profile-drawer" id="profile-drawer" aria-label="Doctor profile" aria-hidden="true">
+        <div class="drawer-header">
+            <div><h2 class="drawer-title">Doctor profile</h2><p class="drawer-copy">Professional details saved only on this device.</p></div>
+            <button type="button" class="icon-btn" id="close-profile" aria-label="Close profile">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="drawer-body">
+            <form id="profile-form">
+                <div class="profile-photo-row">
+                    <span class="doctor-avatar js-avatar" id="profile-avatar">DR</span>
+                    <div><div class="section-heading" style="margin:0">Profile photo</div><div class="field-note">PNG or JPG. Stored locally in this browser.</div><div class="photo-actions"><label class="btn" for="photo-input">Choose photo</label><input class="sr-only" type="file" id="photo-input" accept="image/png,image/jpeg,image/webp"><button type="button" class="btn" id="remove-photo">Remove</button></div></div>
+                </div>
 
-<!-- BODY -->
-<div class="body" id="body-content">
-    <div class="empty"><span class="spin">⏳</span> Loading clinical data from GCP Firestore...</div>
-</div>
+                <section class="profile-section">
+                    <h3 class="section-heading">Identity & introduction</h3>
+                    <div class="form-grid">
+                        <div class="field"><label for="profile-title">Title</label><select class="control" id="profile-title" name="title"><option>Dr.</option><option>Prof.</option><option>Assoc. Prof.</option><option>Mr.</option><option>Ms.</option><option>Mrs.</option></select></div>
+                        <div class="field"><label for="profile-name">Full name *</label><input class="control" id="profile-name" name="fullName" autocomplete="name" required></div>
+                        <div class="field"><label for="profile-pronouns">Pronouns</label><input class="control" id="profile-pronouns" name="pronouns" placeholder="e.g. she/her"></div>
+                        <div class="field"><label for="profile-credentials">Credentials / degrees</label><input class="control" id="profile-credentials" name="credentials" placeholder="MBBS, MD, FACP"></div>
+                        <div class="field full"><label for="profile-bio">Professional bio</label><textarea class="control" id="profile-bio" name="bio" placeholder="Clinical interests, care philosophy and experience"></textarea></div>
+                        <div class="field full"><label for="profile-languages">Languages</label><input class="control" id="profile-languages" name="languages" placeholder="English, Sinhala, Tamil"></div>
+                    </div>
+                </section>
 
-<!-- BOTTOM NAV -->
-<nav class="bnav">
-    <a href="family-app.html" class="ni">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        Family
-    </a>
-    <a href="health-check.html" class="ni">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        Health Check
-    </a>
-    <a class="ni on">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h3M15 15h3"/></svg>
-        EHR
-    </a>
-</nav>
+                <section class="profile-section">
+                    <h3 class="section-heading">Credentials & clinical role</h3>
+                    <div class="form-grid">
+                        <div class="field"><label for="profile-specialty">Primary specialty *</label><input class="control" id="profile-specialty" name="specialty" required placeholder="Internal medicine"></div>
+                        <div class="field"><label for="profile-subspecialty">Subspecialty</label><input class="control" id="profile-subspecialty" name="subspecialty" placeholder="Geriatric medicine"></div>
+                        <div class="field"><label for="profile-license">Medical license number *</label><input class="control" id="profile-license" name="licenseNumber" required></div>
+                        <div class="field"><label for="profile-authority">Licensing authority</label><input class="control" id="profile-authority" name="licenseAuthority" placeholder="Medical council / board"></div>
+                        <div class="field"><label for="profile-expiry">License expiry</label><input class="control" type="date" id="profile-expiry" name="licenseExpiry"></div>
+                        <div class="field"><label for="profile-npi">NPI / provider identifier</label><input class="control" id="profile-npi" name="providerId" inputmode="numeric" placeholder="10-digit NPI or local ID"></div>
+                        <div class="field full"><label for="profile-taxonomy">Provider taxonomy / classification</label><input class="control" id="profile-taxonomy" name="taxonomy" placeholder="Code and classification, if applicable"><div class="field-note">Use the provider classification required in your jurisdiction.</div></div>
+                    </div>
+                </section>
+
+                <section class="profile-section">
+                    <h3 class="section-heading">Practice & contact</h3>
+                    <div class="form-grid">
+                        <div class="field"><label for="profile-facility">Facility / organization *</label><input class="control" id="profile-facility" name="facility" required></div>
+                        <div class="field"><label for="profile-department">Department</label><input class="control" id="profile-department" name="department"></div>
+                        <div class="field"><label for="profile-role">Position / role</label><input class="control" id="profile-role" name="role" placeholder="Consultant physician"></div>
+                        <div class="field"><label for="profile-phone">Professional phone</label><input class="control" type="tel" id="profile-phone" name="phone" autocomplete="tel"></div>
+                        <div class="field"><label for="profile-email">Professional email *</label><input class="control" type="email" id="profile-email" name="email" autocomplete="email" required></div>
+                        <div class="field"><label for="profile-timezone">Time zone</label><input class="control" id="profile-timezone" name="timezone" placeholder="Asia/Colombo"></div>
+                        <div class="field full"><label for="profile-address">Primary practice address</label><textarea class="control" id="profile-address" name="practiceAddress" autocomplete="street-address" placeholder="Street, city, region, postal code, country"></textarea></div>
+                        <div class="field"><label for="profile-modes">Consultation modes</label><input class="control" id="profile-modes" name="consultationModes" placeholder="In-person, telehealth"></div>
+                        <div class="field"><label for="profile-hours">Availability / clinic hours</label><input class="control" id="profile-hours" name="availability" placeholder="Mon–Fri, 08:00–16:00"></div>
+                    </div>
+                </section>
+
+                <section class="profile-section">
+                    <h3 class="section-heading">Clinical workspace preferences</h3>
+                    <label class="check-row"><input type="checkbox" name="onCall"><span><strong>Currently on call</strong><br><span class="field-note">Show on-call availability in your local profile.</span></span></label>
+                    <label class="check-row"><input type="checkbox" name="alertNotifications" checked><span><strong>Clinical alert notifications</strong><br><span class="field-note">Remember your display preference on this device.</span></span></label>
+                    <label class="check-row"><input type="checkbox" name="compactView"><span><strong>Compact clinical view</strong><br><span class="field-note">Use tighter spacing for high-density workflows.</span></span></label>
+                </section>
+
+                <div class="save-state" id="save-state" aria-live="polite"></div>
+                <div class="drawer-actions">
+                    <button type="button" class="btn btn-danger" id="clear-profile">Clear local profile</button>
+                    <div class="action-group"><button type="button" class="btn" id="cancel-profile">Cancel</button><button type="submit" class="btn btn-primary">Save profile</button></div>
+                </div>
+            </form>
+        </div>
+    </aside>
+
+    <div class="overlay" id="registration-overlay"></div>
+    <section class="registration-modal" id="registration-modal" role="dialog" aria-modal="true" aria-labelledby="registration-title" aria-hidden="true">
+        <div class="registration-head">
+            <img class="registration-logo" src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt="WellNest">
+            <div><h2 class="registration-title" id="registration-title">Welcome to your clinical workspace</h2><p class="registration-copy">Create a local doctor profile so your workspace feels personal and your professional identity is ready when you review patient records.</p></div>
+        </div>
+        <div class="registration-body">
+            <div class="privacy-note"><strong>Local-only registration:</strong> this information is saved in this browser using local storage. It is not submitted to a server and does not change the connected EHR endpoints.</div>
+            <form id="registration-form">
+                <div class="form-grid">
+                    <div class="field"><label for="reg-title">Title</label><select class="control" id="reg-title" name="title"><option>Dr.</option><option>Prof.</option><option>Assoc. Prof.</option><option>Mr.</option><option>Ms.</option><option>Mrs.</option></select></div>
+                    <div class="field"><label for="reg-name">Full name *</label><input class="control" id="reg-name" name="fullName" autocomplete="name" required placeholder="Ayesha Perera"></div>
+                    <div class="field"><label for="reg-specialty">Primary specialty *</label><input class="control" id="reg-specialty" name="specialty" required placeholder="Internal medicine"></div>
+                    <div class="field"><label for="reg-license">Medical license number *</label><input class="control" id="reg-license" name="licenseNumber" required></div>
+                    <div class="field"><label for="reg-email">Professional email *</label><input class="control" type="email" id="reg-email" name="email" autocomplete="email" required></div>
+                    <div class="field"><label for="reg-facility">Facility / organization *</label><input class="control" id="reg-facility" name="facility" required></div>
+                </div>
+                <div class="form-error" id="registration-error" role="alert"></div>
+                <div class="registration-actions"><button type="button" class="btn" id="skip-registration">Set up later</button><button type="submit" class="btn btn-primary">Create local profile</button></div>
+            </form>
+        </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const GCP = 'https://wellnest-a2a-28869653773.us-central1.run.app';
@@ -180,18 +562,127 @@ let selectedId = null;
 let residents = [];
 let showJson = false;
 
-/* ── CONN ── */
+const PROFILE_KEY = 'wellnestDoctorProfileV1';
+const REGISTRATION_DISMISSED_KEY = 'wellnestDoctorRegistrationDismissedV1';
+let profilePhoto = '';
+
+const iconSvg = {
+    activity: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    medicine: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m10.5 20.5 10-10a4.24 4.24 0 0 0-6-6l-10 10a4.24 4.24 0 0 0 6 6Z"/><path d="m8.5 8.5 7 7"/></svg>',
+    alert: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+    empty: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 12h6M9 16h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>'
+};
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
+
+function initials(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'DR';
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+function getProfile() {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null'); }
+    catch { return null; }
+}
+
+function saveProfile(profile) {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    updateProfileUI(profile);
+}
+
+function updateProfileUI(profile = getProfile()) {
+    const name = profile?.fullName ? `${profile.title || ''} ${profile.fullName}`.trim() : 'Set up profile';
+    const role = profile?.specialty || 'Doctor account';
+    document.querySelectorAll('.js-doctor-name').forEach(node => node.textContent = name);
+    document.querySelectorAll('.js-doctor-role').forEach(node => node.textContent = role);
+    document.querySelectorAll('.js-avatar').forEach(node => {
+        if (profile?.photo) {
+            node.innerHTML = `<img src="${profile.photo}" alt="" style="width:100%;height:100%;border-radius:inherit;object-fit:cover">`;
+        } else {
+            node.textContent = initials(profile?.fullName);
+        }
+    });
+}
+
+function formToProfile(form, base = {}) {
+    const data = new FormData(form);
+    const result = { ...base };
+    for (const [key, value] of data.entries()) result[key] = String(value).trim();
+    form.querySelectorAll('input[type="checkbox"]').forEach(input => result[input.name] = input.checked);
+    result.photo = profilePhoto;
+    result.updatedAt = new Date().toISOString();
+    return result;
+}
+
+function fillProfileForm(profile = {}) {
+    const form = document.getElementById('profile-form');
+    Array.from(form.elements).forEach(field => {
+        if (!field.name) return;
+        if (field.type === 'checkbox') field.checked = Boolean(profile[field.name]);
+        else field.value = profile[field.name] ?? '';
+    });
+    if (!profile.title) form.elements.title.value = 'Dr.';
+    if (profile.alertNotifications === undefined) form.elements.alertNotifications.checked = true;
+    profilePhoto = profile.photo || '';
+    updateProfileUI(profile);
+}
+
+function openProfile() {
+    closeRegistration();
+    fillProfileForm(getProfile() || {});
+    document.getElementById('profile-drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('profile-drawer').setAttribute('aria-hidden', 'false');
+    document.body.classList.add('no-scroll');
+    setTimeout(() => document.getElementById('profile-name').focus(), 330);
+}
+
+function closeProfile() {
+    document.getElementById('profile-drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('profile-drawer').setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('no-scroll');
+}
+
+function openRegistration() {
+    document.getElementById('registration-modal').classList.add('open');
+    document.getElementById('registration-overlay').classList.add('open');
+    document.getElementById('registration-modal').setAttribute('aria-hidden', 'false');
+    document.body.classList.add('no-scroll');
+    setTimeout(() => document.getElementById('reg-name').focus(), 260);
+}
+
+function closeRegistration() {
+    document.getElementById('registration-modal').classList.remove('open');
+    document.getElementById('registration-overlay').classList.remove('open');
+    document.getElementById('registration-modal').setAttribute('aria-hidden', 'true');
+    if (!document.getElementById('profile-drawer').classList.contains('open')) document.body.classList.remove('no-scroll');
+}
+
+let toastTimer;
+function toast(message) {
+    const node = document.getElementById('toast');
+    node.textContent = message;
+    node.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => node.classList.remove('show'), 2400);
+}
+
+/* CONN */
 async function checkConn() {
     const dot = document.getElementById('cdot');
     const txt = document.getElementById('ctext');
     try {
         const r = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(5000) });
-        if (r.ok) { dot.classList.add('live'); txt.textContent = 'Firestore Live'; }
+        if (r.ok) { dot.classList.add('live'); txt.textContent = 'Firestore live'; }
         else throw 0;
     } catch { dot.classList.remove('live'); txt.textContent = 'Offline'; }
 }
 
-/* ── RESIDENTS ── */
+/* RESIDENTS */
 async function loadResidents() {
     try {
         const r = await fetch(`${GCP}/api/residents`);
@@ -199,12 +690,13 @@ async function loadResidents() {
         const bar = document.getElementById('tab-bar');
         bar.innerHTML = '';
         residents.forEach((res, i) => {
-            const t = document.createElement('div');
-            t.className = 'ptab' + (i === 0 ? ' on' : '');
+            const t = document.createElement('button');
+            t.type = 'button';
+            t.className = 'patient-tab' + (i === 0 ? ' active' : '');
             t.textContent = res.name;
             t.onclick = () => {
-                document.querySelectorAll('.ptab').forEach(x => x.classList.remove('on'));
-                t.classList.add('on');
+                document.querySelectorAll('.patient-tab').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
                 selectedId = res.id;
                 loadData();
             };
@@ -213,13 +705,13 @@ async function loadResidents() {
         });
         await loadData();
     } catch(e) {
-        document.getElementById('tab-bar').innerHTML = '<div style="color:#dc2626;font-size:0.78rem">Failed to load from GCP</div>';
+        document.getElementById('tab-bar').innerHTML = '<div style="color:var(--critical);font-size:.75rem;padding:8px 2px">Failed to load from GCP</div>';
     }
 }
 
-/* ── LOAD ALL DATA FOR SELECTED RESIDENT ── */
+/* LOAD ALL DATA FOR SELECTED RESIDENT */
 async function loadData() {
-    document.getElementById('body-content').innerHTML = '<div class="empty"><span class="spin">⏳</span> Loading clinical data...</div>';
+    document.getElementById('body-content').innerHTML = '<div class="empty-state"><div class="empty-icon"><span class="spin">◌</span></div>Loading clinical data…</div>';
     try {
         const [pd, fhir, alerts] = await Promise.all([
             fetch(`${GCP}/api/residents/${selectedId}`).then(r => r.json()),
@@ -228,150 +720,187 @@ async function loadData() {
         ]);
         render(pd, fhir, alerts);
     } catch(e) {
-        document.getElementById('body-content').innerHTML = `<div class="empty">⚠️ Could not load data from GCP.<br><small>${e.message}</small></div>`;
+        document.getElementById('body-content').innerHTML = `<div class="empty-state"><div class="empty-icon">!</div>Could not load data from GCP.<br><small>${escapeHtml(e.message)}</small></div>`;
     }
 }
 
-/* ── OBSERVATIONS ── */
+/* OBSERVATIONS */
 function renderObs(fhir) {
-    if (!fhir?.entry?.length) return '<div class="empty">No FHIR data available.</div>';
-    return '<div class="obs-list">' + fhir.entry.map(e => {
+    if (!fhir?.entry?.length) return `<div class="empty-state">${iconSvg.empty}<br>No FHIR data available.</div>`;
+    return '<div class="observations">' + fhir.entry.map(e => {
         const obs = e.resource;
         const display = obs.code?.coding?.[0]?.display || obs.code?.text || 'Observation';
         const code = obs.code?.coding?.[0]?.code || '';
-        let val = '--', unit = '', statusCls = 'obs-normal', statusLbl = 'Normal';
+        let val = '--', unit = '', statusCls = 'status-normal', statusLbl = 'Normal';
         if (obs.valueQuantity) {
             val = obs.valueQuantity.value?.toFixed(1) || '--';
             unit = obs.valueQuantity.unit || '';
             const v = parseFloat(val);
-            if (code === '8867-4')  { /* HR */   if (v < 55) { statusCls='obs-low'; statusLbl='Low'; } else if (v > 100) { statusCls='obs-elevated'; statusLbl='Elevated'; } }
-            if (code === '80404-7') { /* Gait */ if (v < 0.65) { statusCls='obs-low'; statusLbl='Below Baseline'; } }
+            if (code === '8867-4') { if (v < 55) { statusCls='status-low'; statusLbl='Low'; } else if (v > 100) { statusCls='status-elevated'; statusLbl='Elevated'; } }
+            if (code === '80404-7' && v < 0.65) { statusCls='status-low'; statusLbl='Below baseline'; }
         } else if (obs.component) {
             const sys = obs.component.find(c => c.code?.coding?.[0]?.code === '8480-6');
             const dia = obs.component.find(c => c.code?.coding?.[0]?.code === '8462-4');
             const sv = sys?.valueQuantity?.value || 0;
             const dv = dia?.valueQuantity?.value || 0;
             val = `${sv}/${dv}`; unit = 'mmHg';
-            if (sv >= 140 || dv >= 90) { statusCls = 'obs-elevated'; statusLbl = 'Elevated'; }
+            if (sv >= 140 || dv >= 90) { statusCls = 'status-elevated'; statusLbl = 'Elevated'; }
         }
-        return `<div class="obs-row">
-            <span class="obs-lbl">${display}</span>
-            <div class="obs-right">
-                <span class="obs-val">${val} <span class="obs-unit">${unit}</span></span>
-                <span class="obs-pill ${statusCls}">${statusLbl}</span>
-            </div>
-        </div>`;
+        return `<div class="observation"><span class="observation-label">${escapeHtml(display)}</span><div class="observation-value-wrap"><div class="observation-value">${escapeHtml(val)} <span class="observation-unit">${escapeHtml(unit)}</span></div><span class="observation-status ${statusCls}">${statusLbl}</span></div></div>`;
     }).join('') + '</div>';
 }
 
-/* ── MEDS ── */
+/* MEDS */
 function renderMeds(profile) {
     const meds = profile?.medications || [];
-    if (!meds.length) return '<div class="empty">No active medications on record.</div>';
-    return `<table class="med-table">
-        <thead><tr><th>Medication</th><th>Dose</th><th>Route</th></tr></thead>
-        <tbody>${meds.map(m => `<tr>
-            <td><div class="med-name">${m.name}</div><div class="med-sub">Started ${m.started || 'N/A'}</div></td>
-            <td style="font-family:'JetBrains Mono',monospace;font-size:0.78rem">${m.dose || '--'}</td>
-            <td><span class="med-route">${m.route || 'Oral'}</span></td>
-        </tr>`).join('')}</tbody>
-    </table>`;
+    if (!meds.length) return '<div class="empty-state">No active medications on record.</div>';
+    return `<div style="overflow-x:auto"><table class="med-table"><thead><tr><th>Medication</th><th>Dose</th><th>Route</th></tr></thead><tbody>${meds.map(m => `<tr><td><div class="medicine-name">${escapeHtml(m.name)}</div><div class="medicine-sub">Started ${escapeHtml(m.started || 'N/A')}</div></td><td style="font-family:'JetBrains Mono',monospace">${escapeHtml(m.dose || '--')}</td><td><span class="medicine-route">${escapeHtml(m.route || 'Oral')}</span></td></tr>`).join('')}</tbody></table></div>`;
 }
 
-/* ── RENDER ── */
+/* RENDER */
 function render(pd, fhir, allAlerts) {
     const p = pd?.profile || {};
-    const residentAlerts = (allAlerts || [])
-        .filter(a => a.resident_id === selectedId)
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
+    const residentAlerts = (allAlerts || []).filter(a => a.resident_id === selectedId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     const topAlert = residentAlerts[0];
     const risk = topAlert?.severity || 'LOW';
-
+    const safeRisk = ['LOW','INFO','ADVISORY','WARNING','CRITICAL'].includes(risk) ? risk : 'LOW';
     const alertsHTML = residentAlerts.length === 0
-        ? '<div class="empty">No clinical alerts from Firestore for this patient.</div>'
+        ? '<div class="empty-state">No clinical alerts from Firestore for this patient.</div>'
         : residentAlerts.map(a => {
+            const severity = ['INFO','ADVISORY','WARNING','CRITICAL'].includes(a.severity) ? a.severity : 'INFO';
             const acts = Array.isArray(a.actions) ? a.actions : [];
-            return `<div class="icard ${a.severity}">
-                <div class="itop">
-                    <span class="isev">${a.severity}</span>
-                    <span class="itime">${new Date(a.timestamp).toLocaleString()}</span>
-                </div>
-                <div class="imsg">${a.message || ''}</div>
-                ${a.correlation ? `<div class="icorr">📋 ${a.correlation}</div>` : ''}
-                ${acts.length ? `<div class="iacts">${acts.map(t => `<span class="iact">${t.trim()}</span>`).join('')}</div>` : ''}
-            </div>`;
+            return `<div class="alert-card ${severity}"><div class="alert-top"><span class="severity">${severity}</span><span class="alert-time">${escapeHtml(new Date(a.timestamp).toLocaleString())}</span></div><div class="alert-message">${escapeHtml(a.message || '')}</div>${a.correlation ? `<div class="correlation">${escapeHtml(a.correlation)}</div>` : ''}${acts.length ? `<div class="alert-actions">${acts.map(t => `<span class="alert-action">${escapeHtml(String(t).trim())}</span>`).join('')}</div>` : ''}</div>`;
         }).join('');
 
-    /* Build FHIR JSON string */
     const fhirJson = JSON.stringify(fhir, null, 2)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-        .replace(/"([^"]+)":/g, '<span class="jk">"$1":</span>')
-        .replace(/: "([^"]*)"/g, ': <span class="js">"$1"</span>')
-        .replace(/: (\d+\.?\d*)/g, ': <span class="jn">$1</span>');
+        .replace(/"([^"]+)":/g, '<span class="json-key">"$1":</span>')
+        .replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+        .replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
 
     document.getElementById('body-content').innerHTML = `
-        <!-- PATIENT HEADER -->
-        <div class="phdr">
-            <div style="display:flex;align-items:flex-start;gap:12px">
-                <div class="pav">${(p.name||'?').charAt(0)}</div>
-                <div>
-                    <div class="pname">${p.name || 'Unknown'}</div>
-                    <div class="pmeta">
-                        <span class="mchip">Age ${p.age || '--'}</span>
-                        <span class="mchip">ID: ${selectedId}</span>
-                        ${(p.conditions||[]).map(c=>`<span class="mchip">${c}</span>`).join('')}
-                    </div>
-                </div>
-            </div>
-            <span class="risk-badge risk-${risk === 'INFO' ? 'LOW' : risk}">${risk === 'INFO' ? 'LOW' : risk} Risk</span>
+        <section class="surface patient-hero">
+            <div class="patient-identity"><div class="patient-avatar">${escapeHtml((p.name || '?').charAt(0))}</div><div><h2 class="patient-name">${escapeHtml(p.name || 'Unknown patient')}</h2><div class="patient-meta"><span class="meta-chip">Age ${escapeHtml(p.age || '--')}</span><span class="meta-chip">ID: ${escapeHtml(selectedId)}</span>${(p.conditions || []).map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join('')}</div></div></div>
+            <span class="risk risk-${safeRisk}">${safeRisk === 'INFO' ? 'LOW' : safeRisk} risk</span>
+        </section>
+        <section class="surface panel">
+            <div class="panel-header"><div class="panel-title-wrap"><span class="panel-icon">${iconSvg.activity}</span><div><h3 class="panel-title">FHIR R4 observations</h3><p class="panel-caption">Latest clinical measurements</p></div><span class="tag">HL7 FHIR</span></div><button type="button" class="text-btn" onclick="toggleJson()" id="json-toggle">View raw JSON</button></div>
+            ${renderObs(fhir)}<pre class="json-box" id="json-box">${fhirJson}</pre>
+        </section>
+        <div class="dashboard-grid">
+            <section class="surface panel"><div class="panel-header"><div class="panel-title-wrap"><span class="panel-icon">${iconSvg.medicine}</span><div><h3 class="panel-title">Active medications</h3><p class="panel-caption">Current medication record</p></div></div></div>${renderMeds(p)}</section>
+            <section class="surface panel"><div class="panel-header"><div class="panel-title-wrap"><span class="panel-icon">${iconSvg.alert}</span><div><h3 class="panel-title">Clinical alerts</h3><p class="panel-caption">AI-supported care signals</p></div>${residentAlerts.length ? `<span class="tag urgent">${residentAlerts.length} active</span>` : ''}</div></div><div class="alert-list">${alertsHTML}</div></section>
         </div>
-
-        <!-- FHIR VITALS -->
-        <div class="card">
-            <div class="card-hdr">
-                <h3>FHIR R4 Observation Bundle</h3>
-                <span class="badge">HL7 FHIR</span>
-                <button class="toggle-json" onclick="toggleJson()">View Raw JSON</button>
-            </div>
-            ${renderObs(fhir)}
-            <pre class="json-box" id="json-box">${fhirJson}</pre>
-        </div>
-
-        <!-- MEDS + ALERTS grid -->
-        <div class="g2">
-            <div class="card">
-                <div class="card-hdr"><h3>Active Medications</h3></div>
-                ${renderMeds(p)}
-            </div>
-            <div class="card">
-                <div class="card-hdr">
-                    <h3>AI Clinical Alerts</h3>
-                    ${residentAlerts.length ? `<span class="badge red">${residentAlerts.length} active</span>` : ''}
-                </div>
-                <div class="inbox">${alertsHTML}</div>
-            </div>
-        </div>
-
-        <div style="font-size:0.7rem;color:var(--muted);text-align:center;padding:4px 0 2px">
-            All data sourced live from GCP Firestore via <code style="font-family:'JetBrains Mono',monospace;font-size:0.66rem">wellnest-a2a-28869653773.us-central1.run.app</code><br>
-            Auto-refreshes every 10 seconds
-        </div>
-    `;
-    showJson = false; /* reset on re-render */
+        <p class="data-footnote">Live data from GCP Firestore via <code>wellnest-a2a-28869653773.us-central1.run.app</code><br>Clinical data refreshes every 10 seconds.</p>`;
+    showJson = false;
 }
 
 function toggleJson() {
     showJson = !showJson;
     const box = document.getElementById('json-box');
+    const button = document.getElementById('json-toggle');
     if (box) box.style.display = showJson ? 'block' : 'none';
+    if (button) button.textContent = showJson ? 'Hide raw JSON' : 'View raw JSON';
 }
 
-/* ── INIT ── */
+document.querySelectorAll('.profile-trigger').forEach(button => button.addEventListener('click', openProfile));
+document.getElementById('close-profile').addEventListener('click', closeProfile);
+document.getElementById('cancel-profile').addEventListener('click', closeProfile);
+document.getElementById('drawer-overlay').addEventListener('click', closeProfile);
+
+document.getElementById('profile-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const profile = formToProfile(event.currentTarget, getProfile() || {});
+    saveProfile(profile);
+    document.getElementById('save-state').textContent = `Saved locally at ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+    toast('Doctor profile saved locally');
+});
+
+document.getElementById('photo-input').addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) { toast('Please choose an image smaller than 1.5 MB'); event.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => { profilePhoto = String(reader.result); const draft = formToProfile(document.getElementById('profile-form'), getProfile() || {}); draft.photo = profilePhoto; updateProfileUI(draft); };
+    reader.readAsDataURL(file);
+});
+
+document.getElementById('remove-photo').addEventListener('click', () => {
+    profilePhoto = '';
+    const draft = formToProfile(document.getElementById('profile-form'), getProfile() || {});
+    draft.photo = '';
+    updateProfileUI(draft);
+});
+
+document.getElementById('clear-profile').addEventListener('click', () => {
+    if (!confirm('Clear the doctor profile saved in this browser?')) return;
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(REGISTRATION_DISMISSED_KEY);
+    profilePhoto = '';
+    fillProfileForm({});
+    updateProfileUI(null);
+    closeProfile();
+    toast('Local doctor profile cleared');
+    setTimeout(openRegistration, 300);
+});
+
+document.getElementById('registration-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const error = document.getElementById('registration-error');
+    error.textContent = '';
+    if (!event.currentTarget.reportValidity()) { error.textContent = 'Please complete all required fields.'; return; }
+    const profile = formToProfile(event.currentTarget, { alertNotifications: true, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '' });
+    saveProfile(profile);
+    localStorage.removeItem(REGISTRATION_DISMISSED_KEY);
+    closeRegistration();
+    toast('Welcome to WellNest — your local profile is ready');
+});
+
+document.getElementById('skip-registration').addEventListener('click', () => {
+    localStorage.setItem(REGISTRATION_DISMISSED_KEY, 'true');
+    closeRegistration();
+    toast('You can set up your profile anytime');
+});
+
+const menuButton = document.getElementById('menu-btn');
+menuButton.addEventListener('click', () => {
+    const sidebar = document.getElementById('sidebar');
+    const open = sidebar.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+});
+document.addEventListener('click', event => {
+    const sidebar = document.getElementById('sidebar');
+    if (window.innerWidth <= 700 && sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuButton.contains(event.target)) {
+        sidebar.classList.remove('open');
+        menuButton.setAttribute('aria-expanded', 'false');
+    }
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+        closeProfile();
+        if (getProfile() || localStorage.getItem(REGISTRATION_DISMISSED_KEY)) closeRegistration();
+        document.getElementById('sidebar').classList.remove('open');
+        menuButton.setAttribute('aria-expanded', 'false');
+    }
+});
+
+/* INIT */
+updateProfileUI();
 checkConn();
 loadResidents();
 setInterval(loadData, 10000);
 setInterval(checkConn, 15000);
+
+const loaderStartedAt = performance.now();
+window.addEventListener('load', () => {
+    const delay = Math.max(0, 1150 - (performance.now() - loaderStartedAt));
+    setTimeout(() => {
+        document.getElementById('preloader').classList.add('done');
+        document.body.classList.remove('no-scroll');
+        if (!getProfile() && !localStorage.getItem(REGISTRATION_DISMISSED_KEY)) setTimeout(openRegistration, 260);
+    }, delay);
+});
 </script>
 </body>
 </html>

@@ -241,6 +241,14 @@ async def broadcast_stream(resident_id: str):
     watch = None
 
     if FIRESTORE_ACTIVE and firestore_client is not None:
+        # Purge stale trace documents BEFORE attaching the watcher.
+        # Firestore on_snapshot fires its initial snapshot with ALL existing docs
+        # as ADDED events, which replays the entire previous health check on every
+        # page refresh / SSE reconnect. Clearing first prevents this ghost replay.
+        # (The trigger endpoint already clears before each new run, so any docs
+        # remaining here are always stale leftovers from a completed check.)
+        clear_trace_events_db(resident_id)
+
         def on_snapshot(col_snapshot, changes, read_time):
             # Only push added events (ignore modifications/deletions)
             for change in changes:
