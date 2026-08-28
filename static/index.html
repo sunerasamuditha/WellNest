@@ -54,9 +54,6 @@
                 <nav class="nav-links">
                     <a href="index.html" class="active">Command Center</a>
                     <a href="a2a-explorer.html">A2A Explorer</a>
-                    <a href="simulation.html">Simulation</a>
-                    <a href="family-gateway.html">Family App</a>
-                    <a href="physician-gateway.html">Physician EHR</a>
                 </nav>
             </div>
 
@@ -65,6 +62,13 @@
                     <div class="connection-dot" id="conn-dot"></div>
                     <span id="conn-text">Checking...</span>
                 </div>
+                <button id="toggle-logs-btn" class="btn btn-secondary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 17 10 11 4 5"></polyline>
+                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                    </svg>
+                    <span id="toggle-logs-text">Mission Control Log</span>
+                </button>
                 <button id="config-backend-btn" class="btn btn-secondary">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -321,7 +325,7 @@
             </section>
 
             <!-- RIGHT PANEL: EMBEDDED TERMINAL + ALERTS TABS -->
-            <section class="panel panel-right glass-panel" style="padding: 0; overflow: hidden;">
+            <section id="panel-right" class="panel panel-right glass-panel hidden" style="padding: 0; overflow: hidden;">
                 <div class="terminal-wrapper">
                     <!-- Tab Bar -->
                     <div class="terminal-tab-bar">

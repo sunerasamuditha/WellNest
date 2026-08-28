@@ -216,26 +216,41 @@ h4 {
    RESPONSIVE DYNAMIC GRID
    ========================================================================== */
 
+.hidden {
+    display: none !important;
+}
+
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 260px 1fr 400px;
+    grid-template-columns: 260px 1fr;
     gap: 16px;
     flex-grow: 1;
     min-height: 0;
     height: calc(100vh - 110px);
     max-height: calc(100vh - 110px);
+    transition: grid-template-columns 0.3s ease;
+}
+
+.dashboard-grid.logs-visible {
+    grid-template-columns: 260px 1fr 400px;
 }
 
 /* Responsive Overrides */
 /* Ultra-wide screens: expand even more */
 @media (min-width: 1800px) {
     .dashboard-grid {
+        grid-template-columns: 280px 1fr;
+    }
+    .dashboard-grid.logs-visible {
         grid-template-columns: 280px 1fr 460px;
     }
 }
 
 @media (max-width: 1400px) {
     .dashboard-grid {
+        grid-template-columns: 240px 1fr;
+    }
+    .dashboard-grid.logs-visible {
         grid-template-columns: 240px 1fr 340px;
     }
 }

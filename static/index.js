@@ -43,6 +43,26 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("config-reset-btn").addEventListener("click", resetConfigToLocal);
     document.getElementById("config-connect-btn").addEventListener("click", connectToBackend);
 
+    // Toggle Mission Control / Alert Log section
+    const toggleLogsBtn = document.getElementById("toggle-logs-btn");
+    if (toggleLogsBtn) {
+        toggleLogsBtn.addEventListener("click", () => {
+            const grid = document.querySelector(".dashboard-grid");
+            const panelRight = document.getElementById("panel-right");
+            if (!panelRight) return;
+            const isHidden = panelRight.classList.contains("hidden");
+            if (isHidden) {
+                panelRight.classList.remove("hidden");
+                if (grid) grid.classList.add("logs-visible");
+                document.getElementById("toggle-logs-text").textContent = "Hide Mission Control";
+            } else {
+                panelRight.classList.add("hidden");
+                if (grid) grid.classList.remove("logs-visible");
+                document.getElementById("toggle-logs-text").textContent = "Mission Control Log";
+            }
+        });
+    }
+
     // Terminal tab switching
     document.querySelectorAll('.terminal-tab').forEach(tab => {
         tab.addEventListener('click', () => {
