@@ -328,6 +328,7 @@ if ('serviceWorker' in navigator) {
 
 /* ── CROSS-PLATFORM PUSH NOTIFICATION ENGINE (ANDROID & DESKTOP) ── */
 let notifiedAlerts = new Set();
+let isInitialAlertLoad = true;
 
 async function sendPushNotification(title, options = {}) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
@@ -336,6 +337,8 @@ async function sendPushNotification(title, options = {}) {
         icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png",
         badge: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png",
         vibrate: [200, 100, 200, 100, 200],
+        tag: "wellnest-ehr-latest", // Replaces previous notification on Android tray
+        renotify: true,
         ...options
     };
 
@@ -388,9 +391,6 @@ function requestPushPermission() {
     }
     if (Notification.permission === "granted") {
         toast("Push notifications are active!");
-        sendPushNotification("WellNest Physician EHR Gateway", {
-            body: "Push notifications active for clinical alert feeds."
-        });
         return;
     }
     Notification.requestPermission().then(permission => {
@@ -407,20 +407,37 @@ function requestPushPermission() {
 }
 
 function checkAndTriggerPush(alertsList) {
+    if (!alertsList || !alertsList.length) return;
+    
+    // Sort alerts newest first
+    const sorted = [...alertsList].sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+    // On initial page load, record all existing alerts so we don't blast historical notifications
+    if (isInitialAlertLoad) {
+        sorted.forEach(a => {
+            const key = (a.timestamp || '') + '_' + (a.severity || '') + '_' + (a.message || '');
+            notifiedAlerts.add(key);
+        });
+        isInitialAlertLoad = false;
+        return;
+    }
+
     if (!("Notification" in window) || Notification.permission !== "granted") return;
-    alertsList.forEach(a => {
-        const alertKey = (a.timestamp || '') + '_' + (a.severity || '') + '_' + (a.message || '');
-        if (!notifiedAlerts.has(alertKey)) {
-            notifiedAlerts.add(alertKey);
-            const title = `EHR Alert: ${a.severity || 'Clinical Update'}`;
-            const body = `Patient ${selectedId}: ${a.message || 'New clinical event logged.'}`;
-            sendPushNotification(title, {
-                body: body,
-                tag: alertKey,
-                requireInteraction: a.severity === 'CRITICAL' || a.severity === 'WARNING'
-            });
-        }
-    });
+
+    // ONLY notify the single latest alert!
+    const latest = sorted[0];
+    const alertKey = (latest.timestamp || '') + '_' + (latest.severity || '') + '_' + (latest.message || '');
+
+    if (!notifiedAlerts.has(alertKey)) {
+        notifiedAlerts.add(alertKey);
+        const title = `EHR Alert: ${latest.severity || 'Clinical Update'}`;
+        const body = `Patient ${selectedId}: ${latest.message || 'New clinical event logged.'}`;
+        sendPushNotification(title, {
+            body: body,
+            tag: "wellnest-ehr-latest",
+            requireInteraction: latest.severity === 'CRITICAL' || latest.severity === 'WARNING'
+        });
+    }
 }
 
 let ehrEventSource = null;
@@ -447,17 +464,6 @@ function subscribeToSSE(residentId) {
             if (data.event_type === 'ALERT' || data.event_type === 'COMPLETE') {
                 loadData();
                 if (txt) txt.textContent = 'Firestore live';
-                if (data.payload && Notification.permission === "granted") {
-                    const p = data.payload;
-                    const key = p.timestamp || Date.now();
-                    if (!notifiedAlerts.has(key)) {
-                        notifiedAlerts.add(key);
-                        sendPushNotification("EHR Live Clinical Alert", {
-                            body: p.message || "Clinical trace completed.",
-                            tag: String(key)
-                        });
-                    }
-                }
             } else if (data.event_type && data.event_type !== 'BROADCAST_CONNECTED') {
                 if (txt) txt.textContent = 'AI Check Running...';
             }
@@ -557,6 +563,7 @@ async function loadResidents() {
                 document.querySelectorAll('.patient-tab').forEach(x => x.classList.remove('active'));
                 t.classList.add('active');
                 selectedId = res.id;
+                isInitialAlertLoad = true;
                 loadData();
                 subscribeToSSE(selectedId);
             };
