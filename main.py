@@ -396,6 +396,10 @@ def serve_family_app_new():
 def serve_ehr_gateway():
     return FileResponse(os.path.join(REMOTE_DIR, "ehr-gateway.html"))
 
+@app.get("/sw.js", response_class=FileResponse)
+def serve_service_worker():
+    return FileResponse(os.path.join(STATIC_DIR, "sw.js"), media_type="application/javascript")
+
 @app.get("/ehrnew", response_class=FileResponse)
 def serve_ehr_gateway_new():
     return FileResponse(os.path.join(REMOTE_DIR, "ehr-gateway-new.html"))

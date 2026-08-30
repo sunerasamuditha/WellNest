@@ -319,8 +319,45 @@ let selectedId = null;
 let residents = [];
 let showJson = false;
 
-/* ── DESKTOP PUSH NOTIFICATION ENGINE ── */
+/* ── SERVICE WORKER REGISTRATION ── */
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+        console.log('SW registered:', reg.scope);
+    }).catch(err => console.warn('SW reg error:', err));
+}
+
+/* ── CROSS-PLATFORM PUSH NOTIFICATION ENGINE (ANDROID & DESKTOP) ── */
 let notifiedAlerts = new Set();
+
+async function sendPushNotification(title, options = {}) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const notifOptions = {
+        icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png",
+        badge: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png",
+        vibrate: [200, 100, 200, 100, 200],
+        ...options
+    };
+
+    // Android Mobile Chrome requires ServiceWorkerRegistration.showNotification() for popups
+    if ('serviceWorker' in navigator) {
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            if (reg && reg.showNotification) {
+                await reg.showNotification(title, notifOptions);
+                return;
+            }
+        } catch (e) {
+            console.warn("ServiceWorker showNotification failed, using fallback:", e);
+        }
+    }
+
+    try {
+        new Notification(title, notifOptions);
+    } catch (e) {
+        console.error("Native Notification error:", e);
+    }
+}
 
 function updateNotifPill() {
     const pill = document.getElementById('notif-pill');
@@ -346,20 +383,22 @@ function updateNotifPill() {
 
 function requestPushPermission() {
     if (!("Notification" in window)) {
-        toast("Desktop Web Push Notifications are not supported by this browser.");
+        toast("Web Push Notifications are not supported by this browser.");
         return;
     }
     if (Notification.permission === "granted") {
-        toast("Desktop push notifications are active!");
+        toast("Push notifications are active!");
+        sendPushNotification("WellNest Physician EHR Gateway", {
+            body: "Push notifications active for clinical alert feeds."
+        });
         return;
     }
     Notification.requestPermission().then(permission => {
         updateNotifPill();
         if (permission === "granted") {
-            toast("Desktop Web Push notifications enabled!");
-            new Notification("WellNest Physician EHR Gateway", {
-                body: "Desktop push notifications active for clinical alert feeds.",
-                icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png"
+            toast("Web Push notifications enabled!");
+            sendPushNotification("WellNest Physician EHR Gateway", {
+                body: "Push notifications active for clinical alert feeds."
             });
         } else if (permission === "denied") {
             toast("Push notification permission was denied in browser settings.");
@@ -375,16 +414,11 @@ function checkAndTriggerPush(alertsList) {
             notifiedAlerts.add(alertKey);
             const title = `EHR Alert: ${a.severity || 'Clinical Update'}`;
             const body = `Patient ${selectedId}: ${a.message || 'New clinical event logged.'}`;
-            try {
-                new Notification(title, {
-                    body: body,
-                    icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png",
-                    tag: alertKey,
-                    requireInteraction: a.severity === 'CRITICAL' || a.severity === 'WARNING'
-                });
-            } catch (e) {
-                console.error("Push notification error:", e);
-            }
+            sendPushNotification(title, {
+                body: body,
+                tag: alertKey,
+                requireInteraction: a.severity === 'CRITICAL' || a.severity === 'WARNING'
+            });
         }
     });
 }
@@ -418,9 +452,9 @@ function subscribeToSSE(residentId) {
                     const key = p.timestamp || Date.now();
                     if (!notifiedAlerts.has(key)) {
                         notifiedAlerts.add(key);
-                        new Notification("EHR Live Clinical Alert", {
+                        sendPushNotification("EHR Live Clinical Alert", {
                             body: p.message || "Clinical trace completed.",
-                            icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png"
+                            tag: String(key)
                         });
                     }
                 }
