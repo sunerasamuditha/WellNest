@@ -388,9 +388,17 @@ def serve_trigger():
 def serve_family_app():
     return FileResponse(os.path.join(REMOTE_DIR, "family-app.html"))
 
+@app.get("/familynew", response_class=FileResponse)
+def serve_family_app_new():
+    return FileResponse(os.path.join(REMOTE_DIR, "family-app-new.html"))
+
 @app.get("/ehr", response_class=FileResponse)
 def serve_ehr_gateway():
     return FileResponse(os.path.join(REMOTE_DIR, "ehr-gateway.html"))
+
+@app.get("/ehrnew", response_class=FileResponse)
+def serve_ehr_gateway_new():
+    return FileResponse(os.path.join(REMOTE_DIR, "ehr-gateway-new.html"))
 
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 

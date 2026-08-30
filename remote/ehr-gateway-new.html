@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WellNest | Physician EHR Gateway (Desktop Push Enabled)</title>
+    <meta name="description" content="WellNest Physician EHR Gateway — HL7 FHIR R4 clinical observation viewer with desktop Web Push Notifications.">
+    <meta name="theme-color" content="#123d30">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --forest-950: #0d2b22;
+            --forest-900: #123d30;
+            --forest-800: #1a4d3e;
+            --forest-700: #25664e;
+            --forest-600: #337a60;
+            --sage-500: #78a984;
+            --sage-300: #aed0b4;
+            --sage-100: #e9f3eb;
+            --surface: #ffffff;
+            --surface-alt: #f8fcf9;
+            --canvas: #f4f8f5;
+            --text: #19332a;
+            --muted: #698078;
+            --line: #dce8df;
+            --line-light: #eaefe9;
+            --normal: #2a7a4b;
+            --normal-soft: #ebf7f0;
+            --elevated: #b25900;
+            --elevated-soft: #fff6eb;
+            --critical: #ad2828;
+            --critical-soft: #fcf0f0;
+            --info-soft: #eef6fc;
+            --info-text: #1d5987;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--canvas); color: var(--text); line-height: 1.45; min-height: 100vh; }
+
+        body.no-scroll { overflow: hidden; }
+        .preloader {
+            position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+            background: radial-gradient(circle at 50% 40%, rgba(174, 208, 180, .28), transparent 31%), linear-gradient(145deg, #f8fcf9 0%, #e9f3eb 100%);
+            transition: opacity .55s ease, visibility .55s ease;
+        }
+        .preloader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-inner { width: min(82vw, 280px); text-align: center; }
+        .loader-mark { width: 132px; height: 132px; margin: 0 auto 22px; position: relative; display: grid; place-items: center; }
+        .loader-mark::before, .loader-mark::after { content: ''; position: absolute; border-radius: 50%; border: 1px solid rgba(37, 102, 78, .18); }
+        .loader-mark::before { inset: 0; border-top-color: var(--forest-700); animation: loaderSpin 2.1s linear infinite; }
+        .loader-mark::after { inset: 9px; border-right-color: var(--sage-500); animation: loaderSpin 1.55s linear infinite reverse; }
+        .loader-logo { width: 92px; height: 92px; object-fit: contain; filter: drop-shadow(0 10px 17px rgba(15, 61, 47, .13)); }
+        .loader-title { font-family: 'Manrope', sans-serif; font-weight: 800; letter-spacing: .16em; color: var(--forest-900); font-size: .95rem; }
+        .loader-copy { color: var(--muted); font-size: .78rem; margin-top: 7px; }
+        .loader-track { height: 3px; margin-top: 20px; overflow: hidden; border-radius: 99px; background: rgba(37, 102, 78, .10); }
+        .loader-bar { width: 46%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--sage-500), var(--forest-700)); animation: loaderProgress 1.25s ease-in-out infinite; }
+        @keyframes loaderSpin { to { transform: rotate(360deg); } }
+        @keyframes loaderProgress { 0% { transform: translateX(-115%); } 100% { transform: translateX(250%); } }
+
+        .app-grid { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+        .sidebar { background: var(--forest-900); color: #ffffff; padding: 24px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 60; }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; padding: 0 4px; }
+        .brand-logo { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.25)); }
+        .brand-title { font-family: 'Manrope', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: .12em; color: #ffffff; }
+        .brand-subtitle { font-size: .65rem; color: rgba(255,255,255,.62); font-weight: 500; }
+        .nav-label { color: rgba(255,255,255,.45); font-size: .63rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 12px 10px 8px; }
+        .nav-menu { display: flex; flex-direction: column; gap: 4px; }
+        .nav-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: rgba(255,255,255,.76); text-decoration: none; font-size: .82rem; font-weight: 600; background: transparent; border: none; text-align: left; cursor: pointer; transition: all .15s ease; }
+        .nav-item:hover { background: rgba(255,255,255,.08); color: #ffffff; }
+        .nav-item.active { background: var(--forest-700); color: #ffffff; box-shadow: inset 0 1px 0 rgba(255,255,255,.14); }
+        .icon { width: 17px; height: 17px; flex-shrink: 0; }
+        .side-spacer { flex: 1; }
+        .side-profile { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background .15s ease; color: #fff; width: 100%; text-align: left; }
+        .side-profile:hover { background: rgba(255,255,255,.12); }
+        .doctor-avatar { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--sage-500), var(--forest-700)); color: #fff; display: grid; place-items: center; font-family: 'Manrope', sans-serif; font-weight: 800; font-size: .78rem; flex-shrink: 0; }
+        .side-profile-copy { flex: 1; min-width: 0; }
+        .side-profile-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .8rem; font-weight: 700; color: #fff; }
+        .side-profile-role { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgba(255,255,255,.52); font-size: .67rem; margin-top: 2px; }
+
+        .main-shell { grid-column: 2; min-width: 0; }
+        .topbar { position: sticky; top: 0; z-index: 50; height: 76px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: rgba(244, 248, 245, .90); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(220, 232, 223, .78); }
+        .mobile-brand, .menu-btn { display: none; }
+        .page-eyebrow { color: var(--forest-600); font-size: .69rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .page-title { margin-top: 3px; font-family: 'Manrope', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--forest-950); }
+        .top-actions { display: flex; align-items: center; gap: 10px; }
+        .connection-pill { min-height: 36px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); padding: 0 13px; color: var(--muted); font-size: .73rem; font-weight: 700; box-shadow: 0 3px 12px rgba(15,61,47,.04); }
+        .connection-dot { width: 8px; height: 8px; border-radius: 50%; background: #a7b4ae; }
+        .connection-dot.live { background: #4e9b6a; box-shadow: 0 0 0 4px rgba(78,155,106,.13); animation: breathe 2s ease-in-out infinite; }
+        @keyframes breathe { 50% { box-shadow: 0 0 0 7px rgba(78,155,106,.05); } }
+        .profile-quick { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-height: 42px; padding: 4px 10px 4px 5px; display: flex; align-items: center; gap: 9px; cursor: pointer; color: var(--text); }
+        .profile-quick .doctor-avatar { width: 32px; height: 32px; border-radius: 9px; font-size: .72rem; }
+        .profile-quick-copy { text-align: left; max-width: 150px; }
+        .profile-quick-name { display: block; font-size: .75rem; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .profile-quick-role { display: block; margin-top: 1px; color: var(--muted); font-size: .62rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        .patient-strip { padding: 16px 30px 0; }
+        .patient-strip-inner { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: thin; padding: 2px 2px 8px; }
+        .patient-tab { flex: 0 0 auto; padding: 9px 16px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--muted); font-size: .78rem; font-weight: 700; cursor: pointer; transition: all .15s ease; }
+        .patient-tab:hover { border-color: var(--sage-500); color: var(--forest-900); }
+        .patient-tab.active { background: var(--forest-900); border-color: var(--forest-900); color: #fff; box-shadow: 0 4px 14px rgba(18,61,48,.18); }
+
+        .content-wrap { padding: 20px 30px 40px; display: flex; flex-direction: column; gap: 18px; }
+        .surface { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 4px 20px rgba(15, 61, 47, .04); }
+
+        .patient-hero { padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: linear-gradient(135deg, #ffffff 0%, var(--surface-alt) 100%); }
+        .patient-identity { display: flex; align-items: center; gap: 16px; }
+        .patient-avatar { width: 56px; height: 56px; border-radius: 16px; background: var(--sage-100); color: var(--forest-900); display: grid; place-items: center; font-family: 'Manrope', sans-serif; font-size: 1.4rem; font-weight: 800; border: 1px solid var(--sage-300); }
+        .patient-name { font-family: 'Manrope', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--forest-950); }
+        .patient-meta { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .meta-chip { padding: 3px 10px; border-radius: 99px; background: var(--canvas); border: 1px solid var(--line); color: var(--muted); font-size: .7rem; font-weight: 600; }
+        .risk { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 99px; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+        .risk-LOW { background: var(--normal-soft); color: var(--normal); border: 1px solid rgba(42,122,75,.2); }
+        .risk-WARNING { background: var(--elevated-soft); color: var(--elevated); border: 1px solid rgba(178,89,0,.2); }
+        .risk-CRITICAL { background: var(--critical-soft); color: var(--critical); border: 1px solid rgba(173,40,40,.2); }
+
+        .panel { padding: 20px 24px; }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line-light); }
+        .panel-title-wrap { display: flex; align-items: center; gap: 10px; }
+        .panel-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--sage-100); color: var(--forest-800); display: grid; place-items: center; }
+        .panel-title { font-family: 'Manrope', sans-serif; font-size: 1rem; font-weight: 800; color: var(--forest-950); }
+        .panel-caption { font-size: .72rem; color: var(--muted); }
+        .tag { padding: 4px 10px; border-radius: 99px; background: var(--sage-100); color: var(--forest-800); font-size: .68rem; font-weight: 700; }
+        .tag.urgent { background: var(--critical-soft); color: var(--critical); }
+
+        .observations { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .observation { padding: 14px 16px; border-radius: 14px; background: var(--canvas); border: 1px solid var(--line); display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+        .observation-label { font-size: .74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        .observation-value-wrap { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+        .observation-value { font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 700; color: var(--forest-950); }
+        .observation-unit { font-size: .75rem; color: var(--muted); font-family: 'DM Sans', sans-serif; font-weight: 500; }
+        .observation-status { font-size: .68rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
+        .status-normal { background: var(--normal-soft); color: var(--normal); }
+        .status-elevated { background: var(--elevated-soft); color: var(--elevated); }
+        .status-low { background: var(--info-soft); color: var(--info-text); }
+
+        .med-table { width: 100%; border-collapse: collapse; font-size: .78rem; text-align: left; }
+        .med-table th { padding: 10px 12px; color: var(--muted); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--line); background: var(--canvas); }
+        .med-table td { padding: 12px; border-bottom: 1px solid var(--line-light); vertical-align: middle; }
+        .medicine-name { font-weight: 700; color: var(--forest-950); }
+        .medicine-sub { font-size: .68rem; color: var(--muted); }
+        .medicine-route { display: inline-block; padding: 2px 8px; border-radius: 6px; background: var(--canvas); border: 1px solid var(--line); font-size: .68rem; font-weight: 600; color: var(--muted); }
+
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media(max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+        .alert-list { display: flex; flex-direction: column; gap: 10px; }
+        .alert-card { padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--sage-500); }
+        .alert-card.CRITICAL { border-left-color: var(--critical); background: var(--critical-soft); }
+        .alert-card.WARNING { border-left-color: var(--elevated); background: var(--elevated-soft); }
+        .alert-card.ADVISORY { border-left-color: var(--forest-600); background: var(--surface-alt); }
+        .alert-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+        .severity { font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; }
+        .CRITICAL .severity { background: var(--critical); color: #fff; }
+        .WARNING .severity { background: var(--elevated); color: #fff; }
+        .ADVISORY .severity { background: var(--forest-700); color: #fff; }
+        .INFO .severity { background: var(--normal-soft); color: var(--normal); }
+        .alert-time { font-size: .68rem; color: var(--muted); }
+        .alert-message { font-size: .83rem; font-weight: 600; color: var(--forest-950); line-height: 1.45; }
+        .correlation { margin-top: 6px; font-size: .7rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; background: rgba(255,255,255,.5); padding: 4px 8px; border-radius: 6px; border: 1px dashed var(--line); }
+        .alert-actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .alert-action { font-size: .68rem; padding: 3px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--forest-900); font-weight: 600; }
+
+        .text-btn { background: none; border: none; color: var(--forest-700); font-size: .73rem; font-weight: 700; cursor: pointer; }
+        .json-box { display: none; margin-top: 14px; padding: 14px; border-radius: 12px; background: var(--forest-950); color: #a9d4b6; font-family: 'JetBrains Mono', monospace; font-size: .72rem; overflow-x: auto; max-height: 320px; }
+
+        .data-footnote { text-align: center; font-size: .7rem; color: var(--muted); margin-top: 10px; }
+        .empty-state { text-align: center; padding: 30px; color: var(--muted); font-size: .82rem; }
+
+        .drawer-overlay, .overlay { position: fixed; inset: 0; z-index: 120; background: rgba(13, 43, 34, .45); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: all .25s ease; }
+        .drawer-overlay.open, .overlay.open { opacity: 1; visibility: visible; }
+        .profile-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 130; width: min(100vw, 480px); background: var(--surface); box-shadow: -8px 0 30px rgba(13, 43, 34, .18); transform: translateX(100%); transition: transform .3s cubic-bezier(.16, 1, .3, 1); display: flex; flex-direction: column; }
+        .profile-drawer.open { transform: translateX(0); }
+        .drawer-header { padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+        .drawer-title { font-family: 'Manrope', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--forest-950); }
+        .icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--canvas); color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .field { display: flex; flex-direction: column; gap: 4px; }
+        .field.full { grid-column: 1 / -1; }
+        .field label { font-size: .68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        .control { padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--canvas); color: var(--text); font-family: inherit; font-size: .82rem; outline: none; }
+        .control:focus { border-color: var(--sage-500); background: #fff; box-shadow: 0 0 0 3px rgba(120, 169, 132, .18); }
+        .btn { padding: 10px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: .8rem; font-weight: 700; cursor: pointer; }
+        .btn-primary { background: var(--forest-900); border-color: var(--forest-900); color: #fff; }
+        .btn-danger { color: var(--critical); border-color: rgba(173,40,40,.3); }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); z-index: 200; background: var(--forest-950); color: #fff; padding: 10px 20px; border-radius: 99px; font-size: .78rem; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,.25); opacity: 0; transition: all .3s cubic-bezier(.16, 1, .3, 1); pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        @media(max-width: 768px) {
+            .app-grid { grid-template-columns: 1fr; }
+            .sidebar { position: fixed; inset: 0 auto 0 0; width: 260px; transform: translateX(-100%); transition: transform .25s ease; }
+            .sidebar.open { transform: translateX(0); }
+            .main-shell { grid-column: 1; }
+            .mobile-brand, .menu-btn { display: flex; align-items: center; }
+            .topbar { padding: 0 16px; }
+            .patient-strip, .content-wrap { padding-left: 16px; padding-right: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="no-scroll">
+
+<div class="preloader" id="preloader" role="status" aria-live="polite">
+    <div class="loader-inner">
+        <div class="loader-mark"><img class="loader-logo" src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt=""></div>
+        <div class="loader-title">WELLNEST</div>
+        <div class="loader-copy">Preparing Physician EHR Gateway (Push Enabled)</div>
+        <div class="loader-track" aria-hidden="true"><div class="loader-bar"></div></div>
+    </div>
+</div>
+
+<div class="app-grid">
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <img class="brand-logo" src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt="WellNest logo">
+            <div>
+                <div class="brand-title">WELLNEST</div>
+                <div class="brand-subtitle">EHR Desktop Push Edition</div>
+            </div>
+        </div>
+        <div class="nav-label">Clinical portals</div>
+        <nav class="nav-menu">
+            <button type="button" class="nav-item active">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>EHR Workspace</span>
+            </button>
+            <button type="button" class="nav-item profile-trigger">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/><path d="M19 8v6M16 11h6"/></svg>
+                <span>Doctor profile</span>
+            </button>
+        </nav>
+        <div class="side-spacer"></div>
+        <button type="button" class="side-profile profile-trigger" aria-label="Open doctor profile">
+            <span class="doctor-avatar js-avatar">DR</span>
+            <span class="side-profile-copy">
+                <span class="side-profile-name js-doctor-name">Set up profile</span>
+                <span class="side-profile-role js-doctor-role">Doctor account</span>
+            </span>
+            <svg class="icon chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+    </aside>
+
+    <main class="main-shell">
+        <header class="topbar">
+            <div style="display:flex;align-items:center;gap:10px">
+                <button type="button" class="menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <div class="mobile-brand"><img src="https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png" alt=""><span>WELLNEST</span></div>
+                <div class="topbar-title">
+                    <div class="page-eyebrow">Clinical workspace</div>
+                    <h1 class="page-title">Physician EHR Gateway</h1>
+                </div>
+            </div>
+            <div class="top-actions">
+                <button type="button" class="connection-pill" id="notif-pill" onclick="requestPushPermission()" style="cursor:pointer;">
+                    <span id="notif-text">Enable Desktop Push 🔔</span>
+                </button>
+                <div class="connection-pill" aria-live="polite">
+                    <span class="connection-dot" id="cdot"></span>
+                    <span id="ctext">Connecting…</span>
+                </div>
+                <button type="button" class="profile-quick profile-trigger" aria-label="Open doctor profile">
+                    <span class="doctor-avatar js-avatar">DR</span>
+                    <span class="profile-quick-copy"><span class="profile-quick-name js-doctor-name">Set up profile</span><span class="profile-quick-role js-doctor-role">Doctor account</span></span>
+                    <svg class="icon chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <section class="patient-strip">
+            <div class="patient-strip-inner" id="tab-bar">
+                <button type="button" class="patient-tab active">Loading residents…</button>
+            </div>
+        </section>
+
+        <div class="content-wrap" id="body-content">
+            <div class="empty-state">Loading patient file…</div>
+        </div>
+    </main>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<aside class="profile-drawer" id="profile-drawer" role="dialog" aria-modal="true" aria-label="Doctor profile drawer" aria-hidden="true">
+    <div class="drawer-header">
+        <h2 class="drawer-title">Doctor profile</h2>
+        <button type="button" class="icon-btn" id="close-profile" aria-label="Close drawer">✕</button>
+    </div>
+    <div class="drawer-body">
+        <form id="profile-form">
+            <section class="profile-section">
+                <h3 class="section-heading" style="font-size:.85rem;margin-bottom:12px;color:var(--forest-900);">Personal & clinical identity</h3>
+                <div class="form-grid">
+                    <div class="field"><label for="profile-title">Title</label><select class="control" id="profile-title" name="title"><option>Dr.</option><option>Prof.</option><option>Assoc. Prof.</option><option>Mr.</option><option>Ms.</option><option>Mrs.</option></select></div>
+                    <div class="field"><label for="profile-name">Full name *</label><input class="control" id="profile-name" name="fullName" autocomplete="name" required placeholder="Ayesha Perera"></div>
+                    <div class="field"><label for="profile-specialty">Primary specialty *</label><input class="control" id="profile-specialty" name="specialty" required placeholder="Internal medicine"></div>
+                    <div class="field"><label for="profile-license">Medical license number *</label><input class="control" id="profile-license" name="licenseNumber" required placeholder="SLMC-84920"></div>
+                </div>
+            </section>
+            <div class="drawer-actions" style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn" id="cancel-profile">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save profile</button>
+            </div>
+        </form>
+    </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const GCP = (window.location.protocol.startsWith('http')) ? window.location.origin : 'https://wellnest-a2a-28869653773.us-central1.run.app';
+let selectedId = null;
+let residents = [];
+let showJson = false;
+
+/* ── DESKTOP PUSH NOTIFICATION ENGINE ── */
+let notifiedAlerts = new Set();
+
+function updateNotifPill() {
+    const pill = document.getElementById('notif-pill');
+    const txt = document.getElementById('notif-text');
+    if (!pill || !txt) return;
+    if (!("Notification" in window)) {
+        txt.textContent = "Push Unsupported";
+        return;
+    }
+    if (Notification.permission === "granted") {
+        pill.style.background = "var(--normal-soft)";
+        pill.style.borderColor = "var(--normal)";
+        txt.textContent = "Push Active 🔔";
+    } else if (Notification.permission === "denied") {
+        pill.style.background = "var(--critical-soft)";
+        pill.style.borderColor = "var(--critical)";
+        txt.textContent = "Push Blocked";
+    } else {
+        pill.style.background = "var(--surface)";
+        txt.textContent = "Enable Push 🔔";
+    }
+}
+
+function requestPushPermission() {
+    if (!("Notification" in window)) {
+        toast("Desktop Web Push Notifications are not supported by this browser.");
+        return;
+    }
+    if (Notification.permission === "granted") {
+        toast("Desktop push notifications are active!");
+        return;
+    }
+    Notification.requestPermission().then(permission => {
+        updateNotifPill();
+        if (permission === "granted") {
+            toast("Desktop Web Push notifications enabled!");
+            new Notification("WellNest Physician EHR Gateway", {
+                body: "Desktop push notifications active for clinical alert feeds.",
+                icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png"
+            });
+        } else if (permission === "denied") {
+            toast("Push notification permission was denied in browser settings.");
+        }
+    });
+}
+
+function checkAndTriggerPush(alertsList) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    alertsList.forEach(a => {
+        const alertKey = (a.timestamp || '') + '_' + (a.severity || '') + '_' + (a.message || '');
+        if (!notifiedAlerts.has(alertKey)) {
+            notifiedAlerts.add(alertKey);
+            const title = `EHR Alert: ${a.severity || 'Clinical Update'}`;
+            const body = `Patient ${selectedId}: ${a.message || 'New clinical event logged.'}`;
+            try {
+                new Notification(title, {
+                    body: body,
+                    icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png",
+                    tag: alertKey,
+                    requireInteraction: a.severity === 'CRITICAL' || a.severity === 'WARNING'
+                });
+            } catch (e) {
+                console.error("Push notification error:", e);
+            }
+        }
+    });
+}
+
+let ehrEventSource = null;
+function subscribeToSSE(residentId) {
+    if (!residentId) return;
+    if (ehrEventSource) {
+        ehrEventSource.close();
+        ehrEventSource = null;
+    }
+    const sseUrl = `${GCP}/api/residents/${residentId}/check/broadcast`;
+    ehrEventSource = new EventSource(sseUrl);
+
+    ehrEventSource.onopen = () => {
+        const dot = document.getElementById('cdot');
+        const txt = document.getElementById('ctext');
+        if (dot) dot.classList.add('live');
+        if (txt) txt.textContent = 'Firestore live';
+    };
+
+    ehrEventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            const txt = document.getElementById('ctext');
+            if (data.event_type === 'ALERT' || data.event_type === 'COMPLETE') {
+                loadData();
+                if (txt) txt.textContent = 'Firestore live';
+                if (data.payload && Notification.permission === "granted") {
+                    const p = data.payload;
+                    const key = p.timestamp || Date.now();
+                    if (!notifiedAlerts.has(key)) {
+                        notifiedAlerts.add(key);
+                        new Notification("EHR Live Clinical Alert", {
+                            body: p.message || "Clinical trace completed.",
+                            icon: "https://i.ibb.co/DHkjd9VB/Well-Nest-Logo.png"
+                        });
+                    }
+                }
+            } else if (data.event_type && data.event_type !== 'BROADCAST_CONNECTED') {
+                if (txt) txt.textContent = 'AI Check Running...';
+            }
+        } catch (e) {}
+    };
+
+    ehrEventSource.onerror = () => {
+        const txt = document.getElementById('ctext');
+        if (txt) txt.textContent = 'Offline';
+    };
+}
+
+const PROFILE_KEY = 'wellnestDoctorProfileV1';
+
+const iconSvg = {
+    activity: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    medicine: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m10.5 20.5 10-10a4.24 4.24 0 0 0-6-6l-10 10a4.24 4.24 0 0 0 6 6Z"/><path d="m8.5 8.5 7 7"/></svg>',
+    alert: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+    empty: '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 12h6M9 16h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>'
+};
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
+
+function initials(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'DR';
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+function getProfile() {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null'); }
+    catch { return null; }
+}
+
+function saveProfile(profile) {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    updateProfileUI(profile);
+}
+
+function updateProfileUI(profile = getProfile()) {
+    const name = profile?.fullName ? `${profile.title || ''} ${profile.fullName}`.trim() : 'Set up profile';
+    const role = profile?.specialty || 'Doctor account';
+    document.querySelectorAll('.js-doctor-name').forEach(node => node.textContent = name);
+    document.querySelectorAll('.js-doctor-role').forEach(node => node.textContent = role);
+    document.querySelectorAll('.js-avatar').forEach(node => {
+        node.textContent = initials(profile?.fullName);
+    });
+}
+
+function openProfile() {
+    document.getElementById('profile-drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.body.classList.add('no-scroll');
+}
+
+function closeProfile() {
+    document.getElementById('profile-drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.body.classList.remove('no-scroll');
+}
+
+let toastTimer;
+function toast(message) {
+    const node = document.getElementById('toast');
+    node.textContent = message;
+    node.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => node.classList.remove('show'), 2400);
+}
+
+/* CONN */
+async function checkConn() {
+    const dot = document.getElementById('cdot');
+    const txt = document.getElementById('ctext');
+    try {
+        const r = await fetch(`${GCP}/api/alerts`, { signal: AbortSignal.timeout(5000) });
+        if (r.ok) { dot.classList.add('live'); if (txt.textContent !== 'AI Check Running...') txt.textContent = 'Firestore live'; }
+        else throw 0;
+    } catch { dot.classList.remove('live'); txt.textContent = 'Offline'; }
+}
+
+/* RESIDENTS */
+async function loadResidents() {
+    try {
+        const r = await fetch(`${GCP}/api/residents`);
+        residents = await r.json();
+        const bar = document.getElementById('tab-bar');
+        bar.innerHTML = '';
+        residents.forEach((res, i) => {
+            const t = document.createElement('button');
+            t.type = 'button';
+            t.className = 'patient-tab' + (i === 0 ? ' active' : '');
+            t.textContent = res.name;
+            t.onclick = () => {
+                document.querySelectorAll('.patient-tab').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                selectedId = res.id;
+                loadData();
+                subscribeToSSE(selectedId);
+            };
+            if (i === 0) selectedId = res.id;
+            bar.appendChild(t);
+        });
+        await loadData();
+        subscribeToSSE(selectedId);
+    } catch(e) {
+        document.getElementById('tab-bar').innerHTML = '<div style="color:var(--critical);font-size:.75rem;padding:8px 2px">Failed to load from GCP</div>';
+    }
+}
+
+/* LOAD ALL DATA FOR SELECTED RESIDENT */
+async function loadData() {
+    try {
+        const [pd, fhir, alerts] = await Promise.all([
+            fetch(`${GCP}/api/residents/${selectedId}`).then(r => r.json()),
+            fetch(`${GCP}/api/residents/${selectedId}/fhir`).then(r => r.json()),
+            fetch(`${GCP}/api/alerts`).then(r => r.json())
+        ]);
+        render(pd, fhir, alerts);
+    } catch(e) {
+        document.getElementById('body-content').innerHTML = `<div class="empty-state"><div class="empty-icon">!</div>Could not load data from GCP.<br><small>${escapeHtml(e.message)}</small></div>`;
+    }
+}
+
+/* OBSERVATIONS */
+function renderObs(fhir) {
+    if (!fhir?.entry?.length) return `<div class="empty-state">${iconSvg.empty}<br>No FHIR data available.</div>`;
+    return '<div class="observations">' + fhir.entry.map(e => {
+        const obs = e.resource;
+        const display = obs.code?.coding?.[0]?.display || obs.code?.text || 'Observation';
+        const code = obs.code?.coding?.[0]?.code || '';
+        let val = '--', unit = '', statusCls = 'status-normal', statusLbl = 'Normal';
+        if (obs.valueQuantity) {
+            val = obs.valueQuantity.value?.toFixed(1) || '--';
+            unit = obs.valueQuantity.unit || '';
+            const v = parseFloat(val);
+            if (code === '8867-4') { if (v < 55) { statusCls='status-low'; statusLbl='Low'; } else if (v > 100) { statusCls='status-elevated'; statusLbl='Elevated'; } }
+            if (code === '80404-7' && v < 0.65) { statusCls='status-low'; statusLbl='Below baseline'; }
+        } else if (obs.component) {
+            const sys = obs.component.find(c => c.code?.coding?.[0]?.code === '8480-6');
+            const dia = obs.component.find(c => c.code?.coding?.[0]?.code === '8462-4');
+            const sv = sys?.valueQuantity?.value || 0;
+            const dv = dia?.valueQuantity?.value || 0;
+            val = `${sv}/${dv}`; unit = 'mmHg';
+            if (sv >= 140 || dv >= 90) { statusCls = 'status-elevated'; statusLbl = 'Elevated'; }
+        }
+        return `<div class="observation"><span class="observation-label">${escapeHtml(display)}</span><div class="observation-value-wrap"><div class="observation-value">${escapeHtml(val)} <span class="observation-unit">${escapeHtml(unit)}</span></div><span class="observation-status ${statusCls}">${statusLbl}</span></div></div>`;
+    }).join('') + '</div>';
+}
+
+/* MEDS */
+function renderMeds(profile) {
+    const meds = profile?.medications || [];
+    if (!meds.length) return '<div class="empty-state">No active medications on record.</div>';
+    return `<div style="overflow-x:auto"><table class="med-table"><thead><tr><th>Medication</th><th>Dose</th><th>Route</th></tr></thead><tbody>${meds.map(m => `<tr><td><div class="medicine-name">${escapeHtml(m.name)}</div><div class="medicine-sub">Started ${escapeHtml(m.started || 'N/A')}</div></td><td style="font-family:'JetBrains Mono',monospace">${escapeHtml(m.dose || '--')}</td><td><span class="medicine-route">${escapeHtml(m.route || 'Oral')}</span></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* RENDER */
+function render(pd, fhir, allAlerts) {
+    const p = pd?.profile || {};
+    const residentAlerts = (allAlerts || []).filter(a => a.resident_id === selectedId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const topAlert = residentAlerts[0];
+    const risk = topAlert?.severity || 'LOW';
+    const safeRisk = ['LOW','INFO','ADVISORY','WARNING','CRITICAL'].includes(risk) ? risk : 'LOW';
+    const alertsHTML = residentAlerts.length === 0
+        ? '<div class="empty-state">No clinical alerts from Firestore for this patient.</div>'
+        : residentAlerts.map(a => {
+            const severity = ['INFO','ADVISORY','WARNING','CRITICAL'].includes(a.severity) ? a.severity : 'INFO';
+            const acts = Array.isArray(a.actions) ? a.actions : [];
+            return `<div class="alert-card ${severity}"><div class="alert-top"><span class="severity">${severity}</span><span class="alert-time">${escapeHtml(new Date(a.timestamp).toLocaleString())}</span></div><div class="alert-message">${escapeHtml(a.message || '')}</div>${a.correlation ? `<div class="correlation">${escapeHtml(a.correlation)}</div>` : ''}${acts.length ? `<div class="alert-actions">${acts.map(t => `<span class="alert-action">${escapeHtml(String(t).trim())}</span>`).join('')}</div>` : ''}</div>`;
+        }).join('');
+
+    checkAndTriggerPush(residentAlerts);
+
+    const fhirJson = JSON.stringify(fhir, null, 2)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"([^"]+)":/g, '<span class="json-key">"$1":</span>')
+        .replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+        .replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
+
+    document.getElementById('body-content').innerHTML = `
+        <section class="surface patient-hero">
+            <div class="patient-identity"><div class="patient-avatar">${escapeHtml((p.name || '?').charAt(0))}</div><div><h2 class="patient-name">${escapeHtml(p.name || 'Unknown patient')}</h2><div class="patient-meta"><span class="meta-chip">Age ${escapeHtml(p.age || '--')}</span><span class="meta-chip">ID: ${escapeHtml(selectedId)}</span>${(p.conditions || []).map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join('')}</div></div></div>
+            <span class="risk risk-${safeRisk}">${safeRisk === 'INFO' ? 'LOW' : safeRisk} risk</span>
+        </section>
+        <section class="surface panel">
+            <div class="panel-header"><div class="panel-title-wrap"><span class="panel-icon">${iconSvg.activity}</span><div><h3 class="panel-title">FHIR R4 observations</h3><p class="panel-caption">Latest clinical measurements</p></div><span class="tag">HL7 FHIR</span></div><button type="button" class="text-btn" onclick="toggleJson()" id="json-toggle">View raw JSON</button></div>
+            ${renderObs(fhir)}<pre class="json-box" id="json-box">${fhirJson}</pre>
+        </section>
+        <div class="dashboard-grid">
+            <section class="surface panel"><div class="panel-header"><div class="panel-title-wrap"><span class="panel-icon">${iconSvg.medicine}</span><div><h3 class="panel-title">Active medications</h3><p class="panel-caption">Current medication record</p></div></div></div>${renderMeds(p)}</section>
+            <section class="surface panel"><div class="panel-header"><div class="panel-title-wrap"><span class="panel-icon">${iconSvg.alert}</span><div><h3 class="panel-title">Clinical alerts</h3><p class="panel-caption">AI-supported care signals</p></div>${residentAlerts.length ? `<span class="tag urgent">${residentAlerts.length} active</span>` : ''}</div></div><div class="alert-list">${alertsHTML}</div></section>
+        </div>
+        <p class="data-footnote">Live data from GCP Firestore via <code>wellnest-a2a-28869653773.us-central1.run.app</code><br>Clinical data refreshes every 10 seconds.</p>`;
+    showJson = false;
+}
+
+function toggleJson() {
+    showJson = !showJson;
+    const box = document.getElementById('json-box');
+    const button = document.getElementById('json-toggle');
+    if (box) box.style.display = showJson ? 'block' : 'none';
+    if (button) button.textContent = showJson ? 'Hide raw JSON' : 'View raw JSON';
+}
+
+document.querySelectorAll('.profile-trigger').forEach(button => button.addEventListener('click', openProfile));
+document.getElementById('close-profile')?.addEventListener('click', closeProfile);
+document.getElementById('cancel-profile')?.addEventListener('click', closeProfile);
+document.getElementById('drawer-overlay')?.addEventListener('click', closeProfile);
+
+const menuButton = document.getElementById('menu-btn');
+menuButton?.addEventListener('click', () => {
+    const sidebar = document.getElementById('sidebar');
+    const open = sidebar.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(open));
+});
+
+/* INIT */
+updateProfileUI();
+updateNotifPill();
+checkConn();
+loadResidents();
+setInterval(loadData, 10000);
+setInterval(checkConn, 15000);
+
+const loaderStartedAt = performance.now();
+window.addEventListener('load', () => {
+    const delay = Math.max(0, 1150 - (performance.now() - loaderStartedAt));
+    setTimeout(() => {
+        document.getElementById('preloader').classList.add('done');
+        document.body.classList.remove('no-scroll');
+    }, delay);
+});
+</script>
+</body>
+</html>
